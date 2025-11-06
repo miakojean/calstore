@@ -15,7 +15,7 @@ export default {
 
 <style scoped>
 section{
-  min-height: 100vh;
+  height: 500px;
   display: flex;
   justify-content: center;
   align-items: center;

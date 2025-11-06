@@ -1,0 +1,27 @@
+# Core
+Django  # Bonne pratique d'utiliser .* pour les patches
+python-decouple  # Essentiel pour la gestion des configurations
+
+# Database
+#psycopg2-binary  # OK pour le développement, pour la production préférez psycopg2 (sans -binary)
+# Alternative pour la production: psycopg2==2.9.7 (nécessite compilateurs)
+#psycopg2
+
+# REST API
+djangorestframework
+django-cors-headers  # Important pour les API frontend
+djangorestframework-simplejwt # Pour l'authentification
+# Media
+Pillow  # Essentiel pour le traitement d'images
+
+# Data analysis (si nécessaire)
+
+# Production
+gunicorn  # Serveur WSGI recommandé
+whitenoise # Excellent pour servir les fichiers statiques
+
+# Suggestions d'ajouts :
+django-environ # Alternative à python-decouple pour une meilleure intégration avec les connexions DB
+python-dotenv # Complément utile pour la gestion des variables d'environnement
+
+requests

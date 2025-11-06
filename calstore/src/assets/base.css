@@ -24,6 +24,11 @@
 
 /* typography */
 
+h1{
+  font-size: 3rem;
+  font-weight: 600;
+}
+
 li{
   list-style: none;
 }
@@ -35,13 +40,12 @@ body {
   background: var(--background-color)
 }
 
-main{
+main {
   padding: 1rem;
   min-height: 100vh;
   width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
-  gap: 1rem;
+  align-items: normal;
 }

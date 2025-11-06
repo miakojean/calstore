@@ -1,10 +1,8 @@
 <template>
   <nav class="navbar" :class="{ 'scrolled': isScrolled }">
     <div class="logo">
-        <h3>Calstore</h3>
+      <h3>Calstore</h3>
     </div>
-
-    <researchinput/>
 
     <!-- 
       <ul class="nav__links">
@@ -53,16 +51,16 @@ export default {
 
 <style scoped>
 .navbar{
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    position: fixed; /* ou sticky selon vos besoins */
-    top: 0;
-    left: 0;
-    z-index: 1000;
-    background-color: white; /* Assurez-vous d'avoir un fond */
-    transition: box-shadow 0.3s ease; /* Transition douce */
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  position: fixed; /* ou sticky selon vos besoins */
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  background-color: white; /* Assurez-vous d'avoir un fond */
+  transition: box-shadow 0.3s ease; /* Transition douce */
 }
 
 .navbar.scrolled {
