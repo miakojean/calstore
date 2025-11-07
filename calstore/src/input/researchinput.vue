@@ -11,8 +11,10 @@ export default {
 </script>
 
 <style scoped>
+/* for mobile first */
+
 input{
-  background: var(--background-color);
+  background: #fff;
   width: 100%;
   max-width: 500px;
   padding: 0.8rem;
