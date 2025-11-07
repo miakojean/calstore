@@ -19,31 +19,46 @@
   </nav>
 </template>
 
-<script>
+<script lang="ts">
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import cartButton from '../button/cartButton.vue'
 import researchinput from '@/input/researchinput.vue';
 import Researchinput from '../../input/researchinput.vue';
+import { useCartStore } from '@/stores/cartStore';
+
 export default {
   name: 'Navbar',
-  components:{
+  components: {
     cartButton,
     researchinput,
     Researchinput,
   },
-  data() {
-    return {
-      isScrolled: false
+  setup() {
+
+    const store = useCartStore()
+
+    // Reactive data avec typage
+    const isScrolled = ref<boolean>(false)
+
+    // Methods avec typage
+    const handleScroll = (): void => {
+      isScrolled.value = window.scrollY > 10
     }
-  },
-  mounted() {
-    window.addEventListener('scroll', this.handleScroll)
-  },
-  beforeUnmount() {
-    window.removeEventListener('scroll', this.handleScroll)
-  },
-  methods: {
-    handleScroll() {
-      this.isScrolled = window.scrollY > 10
+
+    // Lifecycle
+    onMounted((): void => {
+      window.addEventListener('scroll', handleScroll);
+      console.log(store.cart)
+    })
+
+    onBeforeUnmount((): void => {
+      window.removeEventListener('scroll', handleScroll)
+    })
+
+    // Return
+    return {
+      isScrolled,
+      store
     }
   }
 }

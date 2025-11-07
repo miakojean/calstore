@@ -37,6 +37,8 @@ button{
     padding: 0.7rem;
     border-radius: 0.5rem;
     font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
 }
 
 </style>
