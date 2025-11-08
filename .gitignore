@@ -182,3 +182,6 @@ secret_key.txt
 
 # JWT secrets
 jwt_secret.txt
+
+#rest api files
+*.http

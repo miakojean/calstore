@@ -14,10 +14,6 @@
                 <span v-if="product.originalPrice" class="original-price">{{ product.originalPrice }} €</span>
                 <span v-if="product.discount" class="discount">{{ product.discount }}</span>
             </div>
-            <div v-if="product.rating" class="rating">
-                <span class="stars">{{ getStars(product.rating) }}</span>
-                <span class="review-count">({{ product.reviewCount }})</span>
-            </div>
             <button class="add-to-cart-btn" @click="addToCart">
                 <span class="btn-icon"> 
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">

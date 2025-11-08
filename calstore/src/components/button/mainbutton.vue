@@ -1,6 +1,11 @@
 <template>
   <button>
-    {{ label }}
+    <span v-if="isLoading === false">{{ label }}</span>
+    <span
+      v-if="isLoading === true"
+      class="loading loading-spinner loading-md"
+    >
+    </span>
   </button>
 </template>
 
@@ -10,6 +15,10 @@ export default {
     label:{
       type:String,
       default:"Commander"
+    },
+    isLoading:{
+      type:Boolean,
+      default: false
     }
   },
   emits:["handleClicked"],

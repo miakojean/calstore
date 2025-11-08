@@ -1,23 +1,30 @@
 <template>
     <section>
-
         <h4>S'abonner à la newsletter</h4>
 
         <div class="newsletter__form">
-            <inputfamily/>
-            <mainbutton label="s'abonner"/>
+            <inputfamily 
+                v-model="payload.email" 
+                ref="inputRef"
+                :show-error="showEmailError"
+                :errorMessage="errorMessage"
+            />
+            <mainbutton 
+                label="s'abonner" 
+                :isLoading="isLoading"
+                @click="simulateapi"
+            />
         </div>
-
     </section>
 </template>
 
 <script lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import mainbutton from '../button/mainbutton.vue';
-import inputfamily from '@/input/inputfamily.vue';
+import inputfamily from '../input/inputfamily.vue';
 
 export default {
-    name: 'CategorySection',
+    name: 'NewsletterSection',
     components: {
         mainbutton,
         inputfamily
@@ -29,11 +36,45 @@ export default {
         }
     },
     setup(props) {
+        const isLoading = ref(false)
+        const inputRef = ref(null);
+        const showEmailError = ref(false);
+        const errorMessage = ref("")
 
+        const payload = ref({
+            email: ""
+        });
 
-        // Return everything that should be available in template
+        const simulateapi = () => {
+            errorMessage.value = ""
+            const isValid = inputRef.value?.validateEmail();
+            showEmailError.value = !isValid;
+
+            if (!isValid) {
+                errorMessage.value = "Veuillez entrer une addresse valide";
+                setTimeout(()=>{
+                    errorMessage.value = ""
+                }, 5000)
+                return;
+            }
+
+            isLoading.value = true;
+
+            setTimeout(() => {
+                alert("Abonnement réussi !!!");
+                isLoading.value = false;
+                payload.value.email = ""; // Réinitialiser le champ
+                showEmailError.value = false; // Réinitialiser l'erreur
+            }, 1000);
+        };
+
         return {
-            
+            inputRef,
+            isLoading,
+            errorMessage,
+            showEmailError,
+            simulateapi,
+            payload
         }
     }
 }

@@ -29,8 +29,6 @@ class Brand(models.Model):
 
     def __str__(self):
         return self.name
-    
-    # La classe Brand (Marque) dans un e-commerce sert à gérer les marques ou fabricants des produits.
 
 class Product(models.Model):
     # Informations de base
@@ -130,6 +128,28 @@ class ProductVariant(models.Model):
     def __str__(self):
         return f"{self.product.name} - {self.name}: {self.value}"
 
+# SUPPRIMER la classe Customer existante et la remplacer par :
+class GuestCustomer(models.Model):
+    """Client sans compte pour les commandes rapides"""
+    email = models.EmailField()
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    phone = models.CharField(max_length=20)
+    
+    # Pour permettre la création de compte ultérieure
+    user_account = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='guest_customer')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Guest Customer"
+        verbose_name_plural = "Guest Customers"
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name} ({self.email})"
+
+# CONSERVER la classe Customer pour les utilisateurs inscrits
 class Customer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='customer')
     phone = models.CharField(max_length=20, blank=True)
@@ -153,7 +173,9 @@ class Address(models.Model):
         ('shipping', 'Livraison'),
     ]
 
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='addresses')
+    # Remplacer la ForeignKey pour accepter GuestCustomer aussi
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True, related_name='addresses')
+    guest_customer = models.ForeignKey(GuestCustomer, on_delete=models.CASCADE, null=True, blank=True, related_name='addresses')
     address_type = models.CharField(max_length=10, choices=ADDRESS_TYPES)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
@@ -169,14 +191,19 @@ class Address(models.Model):
 
     class Meta:
         verbose_name_plural = "Addresses"
-        unique_together = ['customer', 'address_type', 'is_default']
 
     def __str__(self):
         return f"{self.address_type.title()} - {self.city}, {self.country}"
 
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if not self.customer and not self.guest_customer:
+            raise ValidationError("Une adresse doit être associée à un client (inscrit ou invité).")
+
 class Cart(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True, related_name='carts')
+    guest_customer = models.ForeignKey(GuestCustomer, on_delete=models.CASCADE, null=True, blank=True, related_name='carts')
     session_key = models.CharField(max_length=100, blank=True)  # Pour les utilisateurs non connectés
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -251,6 +278,13 @@ class Order(models.Model):
     # Informations de base
     order_number = models.CharField(max_length=20, unique=True)
     customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, blank=True, related_name='orders')
+    guest_customer = models.ForeignKey(GuestCustomer, on_delete=models.SET_NULL, null=True, blank=True, related_name='orders')
+    
+    # Informations de contact pour les invités
+    guest_email = models.EmailField(blank=True)
+    guest_first_name = models.CharField(max_length=100, blank=True)
+    guest_last_name = models.CharField(max_length=100, blank=True)
+    guest_phone = models.CharField(max_length=20, blank=True)
     
     # Statuts
     status = models.CharField(max_length=20, choices=ORDER_STATUS, default='pending')
@@ -297,12 +331,38 @@ class Order(models.Model):
     def save(self, *args, **kwargs):
         if not self.order_number:
             self.order_number = self.generate_order_number()
+        
+        # Remplir les informations invité si c'est une commande invité
+        if self.guest_customer and not self.guest_email:
+            self.guest_email = self.guest_customer.email
+            self.guest_first_name = self.guest_customer.first_name
+            self.guest_last_name = self.guest_customer.last_name
+            self.guest_phone = self.guest_customer.phone
+            
         super().save(*args, **kwargs)
 
     def generate_order_number(self):
         import random
         import string
         return f"ORD-{''.join(random.choices(string.ascii_uppercase + string.digits, k=10))}"
+
+    @property
+    def customer_name(self):
+        if self.customer:
+            return str(self.customer)
+        elif self.guest_customer:
+            return str(self.guest_customer)
+        else:
+            return f"{self.guest_first_name} {self.guest_last_name}"
+
+    @property
+    def customer_email(self):
+        if self.customer:
+            return self.customer.user.email
+        elif self.guest_customer:
+            return self.guest_customer.email
+        else:
+            return self.guest_email
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
@@ -317,6 +377,7 @@ class OrderItem(models.Model):
     def __str__(self):
         return f"{self.quantity} x {self.product_name}"
 
+# Les autres classes (Review, Wishlist, Coupon, Payment) restent inchangées
 class Review(models.Model):
     RATING_CHOICES = [
         (1, '1 étoile'),
