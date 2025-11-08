@@ -26,26 +26,15 @@
 </template>
 
 <script lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import productcard from '../card/productcard.vue'
-import seconbutton from '../button/seconbutton.vue';
 import morebutton from '../button/morebutton.vue';
 import { useCartStore } from '@/stores/cartStore'
-
-// Interface pour les produits
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  image: string;
-  description: string;
-}
 
 export default {
   name: 'CategorySection',
   components: {
     productcard,
-    seconbutton,
     morebutton
   },
   props: {
@@ -55,60 +44,58 @@ export default {
     }
   },
   setup(props) {
-    // Refs
     const scrollContainer = ref<HTMLElement | null>(null)
     const currentIndex = ref(0)
     const cards = Array(5).fill(null)
-    const showDebug = ref(true) // Mettre à false pour cacher le debug
-
-    // Store Panier
     const cartStore = useCartStore()
 
-    // Données des produits (simulées)
-    const products: Product[] = [
+    // Données des produits avec différentes images
+    const products = [
       {
         id: 1,
         name: "Basket simple blanche",
         price: 89.99,
-        image: "../../assets/pic/Copilot_20251107_112529.png",
-        description: "Basket blanche élégante et confortable"
+        image: "Copilot_20251107_112529.png", // Juste le nom du fichier
+        description: "Basket blanche élégante et confortable",
+        originalPrice: 129.99,
+        discount: "-30%",
+        rating: 4.5,
+        reviewCount: 128
       },
       {
         id: 2,
-        name: "Basket running noire",
+        name: "Basket running noire", 
         price: 119.99,
-        image: "../../assets/pic/sneaker-black.jpg",
-        description: "Parfaite pour le sport"
+        image: "Copilot_20251107_112743.png", // Juste le nom du fichier
+        description: "Parfaite pour le sport",
+        rating: 4.2,
+        reviewCount: 89
       },
       {
         id: 3,
-        name: "Chaussure ville marron",
-        price: 149.99,
-        image: "../../assets/pic/shoes-brown.jpg",
-        description: "Style classique et raffiné"
+        name: "Soulier noir", 
+        price: 119.99,
+        image: "Copilot_20251107_112754.png", // Juste le nom du fichier
+        description: "Parfaite pour cérémonie",
+        rating: 4.2,
+        reviewCount: 89
       },
-      {
-        id: 4,
-        name: "Basket colorée",
-        price: 79.99,
-        image: "../../assets/pic/sneaker-color.jpg",
-        description: "Pour un look décontracté"
-      },
-      {
-        id: 5,
-        name: "Chaussure de luxe",
-        price: 199.99,
-        image: "../../assets/pic/luxury-shoes.jpg",
-        description: "Élégance et sophistication"
-      }
+      // ... autres produits
     ]
 
-    // Computed du store
-    const cart = computed(() => cartStore.cart)
-    const totalItems = computed(() => cartStore.totalItems)
-    const totalPrice = computed(() => cartStore.totalPrice)
+    const getProductData = (index: number) => {
+      return products[index] || products[0]
+    }
 
-    // Méthodes
+    const addToCart = (product: any) => {
+      cartStore.addToCart({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image
+      })
+    }
+
     const setupCarousel = () => {
       if (scrollContainer.value) {
         scrollContainer.value.scrollLeft = 0
@@ -133,46 +120,14 @@ export default {
       }
     }
 
-    // Obtenir les données du produit par index
-    const getProductData = (index: number): Product => {
-      return products[index] || products[0]
-    }
-
-    // Ajouter au panier
-    const addToCart = (product: Product) => {
-      console.log('Ajout au panier:', product)
-      cartStore.addToCart({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.image
-      })
-      
-      // Feedback visuel
-      const addedProduct = document.querySelector(`[data-product-id="${product.id}"]`)
-      if (addedProduct) {
-        addedProduct.classList.add('added-to-cart')
-        setTimeout(() => {
-          addedProduct.classList.remove('added-to-cart')
-        }, 1000)
-      }
-    }
-
-    // Lifecycle
     onMounted(() => {
       setupCarousel()
-      console.log('Store panier chargé:', cartStore.cart)
     })
 
-    // Return everything that should be available in template
     return {
       scrollContainer,
       currentIndex,
       cards,
-      cart,
-      totalItems,
-      totalPrice,
-      showDebug,
       handleScroll,
       scrollToIndex,
       getProductData,

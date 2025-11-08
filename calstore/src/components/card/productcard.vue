@@ -1,7 +1,7 @@
 <template>
     <div class="product__card" :data-product-id="product.id">
         <div class="image__container">
-            <img src="../../assets/pic/Copilot_20251107_112529.png" :alt="product.name" class="product-image">
+            <img :src="'/pic/' + product.image" :alt="product.name" class="product-image">
             <div class="overlay">
                 <button class="quick-view-btn">Voir plus</button>
             </div>
@@ -11,9 +11,19 @@
             <p class="product-description">{{ product.description }}</p>
             <div class="price-section">
                 <span class="current-price">{{ product.price }} €</span>
+                <span v-if="product.originalPrice" class="original-price">{{ product.originalPrice }} €</span>
+                <span v-if="product.discount" class="discount">{{ product.discount }}</span>
+            </div>
+            <div v-if="product.rating" class="rating">
+                <span class="stars">{{ getStars(product.rating) }}</span>
+                <span class="review-count">({{ product.reviewCount }})</span>
             </div>
             <button class="add-to-cart-btn" @click="addToCart">
-                <span class="btn-icon">🛒</span>
+                <span class="btn-icon"> 
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+                    </svg>
+                </span>
                 Ajouter au panier
             </button>
         </div>
@@ -30,14 +40,23 @@ export default {
                 id: 1,
                 name: "Basket simple blanche",
                 price: 89.99,
-                image: "../../assets/pic/Copilot_20251107_112529.png",
-                description: "Basket blanche élégante et confortable"
+                image: "Copilot_20251107_112529.png",
+                description: "Basket blanche élégante et confortable",
+                originalPrice: null,
+                discount: null,
+                rating: null,
+                reviewCount: null
             })
         }
     },
     methods: {
         addToCart() {
             this.$emit('add-to-cart', this.product)
+        },
+        getStars(rating) {
+            const fullStars = '★'.repeat(Math.floor(rating));
+            const emptyStars = '☆'.repeat(5 - Math.floor(rating));
+            return fullStars + emptyStars;
         }
     }
 }

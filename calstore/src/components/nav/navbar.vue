@@ -13,8 +13,7 @@
     -->
 
     <div class="btn__container">
-      <cartButton/>
-      <button class="btn">Connexion</button>
+      <cartButton @click="showCartModal"/>
     </div>
   </nav>
 </template>
@@ -22,20 +21,21 @@
 <script lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import cartButton from '../button/cartButton.vue'
-import researchinput from '@/input/researchinput.vue';
-import Researchinput from '../../input/researchinput.vue';
 import { useCartStore } from '@/stores/cartStore';
 
 export default {
   name: 'Navbar',
   components: {
     cartButton,
-    researchinput,
-    Researchinput,
   },
-  setup() {
+  emits:['opencart'],
+  setup(props,{emit}) {
 
     const store = useCartStore()
+
+    const showCartModal = () =>{
+      emit("opencart");
+    }
 
     // Reactive data avec typage
     const isScrolled = ref<boolean>(false)
@@ -58,7 +58,8 @@ export default {
     // Return
     return {
       isScrolled,
-      store
+      store,
+      showCartModal
     }
   }
 }
@@ -69,7 +70,7 @@ export default {
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-around;
+  justify-content: space-between;
   position: fixed; /* ou sticky selon vos besoins */
   top: 0;
   left: 0;
