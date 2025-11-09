@@ -1,12 +1,12 @@
 <script lang="ts">
+import { defineComponent, ref } from 'vue'
 import TheWelcome from '../components/TheWelcome.vue'
 import navbar from '@/components/nav/navbar.vue';
 import categorysection from '@/components/section/categorysection.vue';
 import newslettersection from '@/components/section/newslettersection.vue';
 import cartmodal from '@/components/modal/cartmodal.vue';
-import { ref } from 'vue'
 
-export default {
+export default defineComponent({
   name: 'HomePage',
   components: {
     TheWelcome,
@@ -22,7 +22,7 @@ export default {
       showCartModal
     }
   }
-}
+})
 </script>
 
 <template>

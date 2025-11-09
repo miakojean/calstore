@@ -23,9 +23,9 @@
                 </svg> 
                 Mon Panier
             </h2>
-            <span class="item-count">{{ totalItems }} article{{ totalItems > 1 ? 's' : '' }}</span>
+            <span class="item-count">{{ totalItems }} article {{ totalItems > 1 ? 's' : '' }}</span>
           </div>
-          <button class="close-icon" @click="closeModal">×</button>
+          <button class="close-icon" @click="closeModal">x</button>
         </div>
 
         <!-- Contenu du panier -->
@@ -48,7 +48,7 @@
                 :key="item.id" 
                 class="cart-item"
               >
-                <img :src="item.image" :alt="item.name" class="item-image">
+                <img :src="'/pic/'+item.image" :alt="item.name" class="item-image">
                 
                 <div class="item-details">
                   <h4 class="item-name">{{ item.name }}</h4>
@@ -60,7 +60,7 @@
                       @click="decreaseQuantity(item.id)"
                       :disabled="item.quantity <= 1"
                     >
-                      −
+                      -
                     </button>
                     <span class="quantity">{{ item.quantity }}</span>
                     <button 
