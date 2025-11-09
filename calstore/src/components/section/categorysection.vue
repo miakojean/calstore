@@ -1,12 +1,12 @@
 <template>
   <section>
     <h4>{{ title }}</h4>
-    <p>Découvrir notre panoplie de chaussures</p>
+    <p>{{ description }}</p>
     <div class="category__container" ref="scrollContainer" @scroll="handleScroll">
       <productcard 
-        v-for="(card, index) in cards" 
-        :key="index" 
-        :product="getProductData(index)"
+        v-for="(product, index) in products" 
+        :key="product.id || index" 
+        :product="product"
         @add-to-cart="addToCart"
       />
     </div>
@@ -14,14 +14,14 @@
     <!-- Indicateurs -->
     <div class="carousel-indicators">
       <span 
-        v-for="(card, index) in cards" 
-        :key="index"
+        v-for="(product, index) in products" 
+        :key="product.id || index"
         :class="['indicator', { active: currentIndex === index }]"
         @click="scrollToIndex(index)"
       ></span>
     </div>
 
-    <morebutton label="Voir tous les articles"/>
+    <morebutton :label="buttonLabel" @click="$emit('view-all')"/>
   </section>
 </template>
 
@@ -30,6 +30,19 @@ import { ref, onMounted } from 'vue'
 import productcard from '../card/productcard.vue'
 import morebutton from '../button/morebutton.vue';
 import { useCartStore } from '@/stores/cartStore'
+
+// Interface pour les produits
+interface Product {
+  id: number | string;
+  name: string;
+  price: number;
+  image: string;
+  description?: string;
+  originalPrice?: number;
+  discount?: string;
+  rating?: number;
+  reviewCount?: number;
+}
 
 export default {
   name: 'CategorySection',
@@ -41,53 +54,57 @@ export default {
     title: {
       type: String,
       default: "Chaussures"
+    },
+    description: {
+      type: String,
+      default: "Découvrir notre panoplie de chaussures"
+    },
+    products: {
+      type: Array as () => Product[],
+      default: () => [
+        {
+          id: 1,
+          name: "Basket simple blanche",
+          price: 89.99,
+          image: "Copilot_20251107_112529.png",
+          description: "Basket blanche élégante et confortable",
+          originalPrice: 129.99,
+          discount: "-30%",
+          rating: 4.5,
+          reviewCount: 128
+        },
+        {
+          id: 2,
+          name: "Basket running noire", 
+          price: 119.99,
+          image: "Copilot_20251107_112743.png",
+          description: "Parfaite pour le sport",
+          rating: 4.2,
+          reviewCount: 89
+        },
+        {
+          id: 3,
+          name: "Soulier noir", 
+          price: 119.99,
+          image: "Copilot_20251107_112754.png",
+          description: "Parfaite pour cérémonie",
+          rating: 4.2,
+          reviewCount: 89
+        }
+      ]
+    },
+    buttonLabel: {
+      type: String,
+      default: "Voir tous les articles"
     }
   },
-  setup(props) {
+  emits: ['view-all'],
+  setup(props, { emit }) {
     const scrollContainer = ref<HTMLElement | null>(null)
     const currentIndex = ref(0)
-    const cards = Array(5).fill(null)
     const cartStore = useCartStore()
 
-    // Données des produits avec différentes images
-    const products = [
-      {
-        id: 1,
-        name: "Basket simple blanche",
-        price: 89.99,
-        image: "Copilot_20251107_112529.png", // Juste le nom du fichier
-        description: "Basket blanche élégante et confortable",
-        originalPrice: 129.99,
-        discount: "-30%",
-        rating: 4.5,
-        reviewCount: 128
-      },
-      {
-        id: 2,
-        name: "Basket running noire", 
-        price: 119.99,
-        image: "Copilot_20251107_112743.png", // Juste le nom du fichier
-        description: "Parfaite pour le sport",
-        rating: 4.2,
-        reviewCount: 89
-      },
-      {
-        id: 3,
-        name: "Soulier noir", 
-        price: 119.99,
-        image: "Copilot_20251107_112754.png", // Juste le nom du fichier
-        description: "Parfaite pour cérémonie",
-        rating: 4.2,
-        reviewCount: 89
-      },
-      // ... autres produits
-    ]
-
-    const getProductData = (index: number) => {
-      return products[index] || products[0]
-    }
-
-    const addToCart = (product: any) => {
+    const addToCart = (product: Product) => {
       cartStore.addToCart({
         id: product.id,
         name: product.name,
@@ -127,10 +144,8 @@ export default {
     return {
       scrollContainer,
       currentIndex,
-      cards,
       handleScroll,
       scrollToIndex,
-      getProductData,
       addToCart
     }
   }

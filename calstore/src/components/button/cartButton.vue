@@ -9,7 +9,7 @@
       <span 
         v-if="totalItems > 0" 
         class="cart-badge"
-        :class="{ 'pulse-animation': shouldPulse }"
+        :class=" { 'pulse-animation': shouldPulse } "
       >
         {{ totalItems > 99 ? '99+' : totalItems }}
       </span>

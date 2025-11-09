@@ -1,4 +1,23 @@
-<script lang="ts">
+<template>
+  <main>
+  <navbar @opencart="showCartModal = true"/>
+  <TheWelcome />
+  <h3>Catégories de produits</h3>
+  <categorysection />
+  <categorysection 
+    title="Sac à mains" 
+    :products="handBag"
+    description="Découvrer nos nouveautés de sacs à mains"
+  />
+  <categorysection title="Perruques"/>
+  <categorysection title="T-shirt"/>
+  <h3>Restez au courant des nouveautés</h3>
+  <newslettersection />
+  <cartmodal :isOpen="showCartModal" @close="showCartModal = false"/>
+  </main>
+</template>
+
+<script>
 import { defineComponent, ref } from 'vue'
 import TheWelcome from '../components/TheWelcome.vue'
 import navbar from '@/components/nav/navbar.vue';
@@ -18,23 +37,42 @@ export default defineComponent({
   setup() {
     const showCartModal = ref(false)
 
+    const handBag = ref([
+      {
+        id: 1,
+        name: "Sac à main noir",
+        price: 89.99,
+        image: "Copilot_20251109_224858.png",
+        description: "Basket blanche élégante et confortable",
+        originalPrice: 129.99,
+        discount: "-30%",
+        rating: 4.5,
+        reviewCount: 128
+      },
+      {
+        id: 2,
+        name: "Sac à main noir", 
+        price: 119.99,
+        image: "Copilot_20251109_225048.png",
+        description: "Parfaite pour le sport",
+        rating: 4.2,
+        reviewCount: 89
+      },
+      {
+        id: 3,
+        name: "Soulier noir", 
+        price: 119.99,
+        image: "sac_a_main.png",
+        description: "Parfaite pour cérémonie",
+        rating: 4.2,
+        reviewCount: 89
+      }
+    ])
+
     return {
-      showCartModal
+      showCartModal,
+      handBag
     }
   }
 })
 </script>
-
-<template>
-  <main>
-    <navbar @opencart="showCartModal = true"/>
-    <TheWelcome />
-    <h3>Catégories de produits</h3>
-    <categorysection />
-    <categorysection title="Perruques"/>
-    <categorysection title="T-shirt"/>
-    <h3>Restez au courant des nouveautés</h3>
-    <newslettersection />
-    <cartmodal :isOpen="showCartModal" @close="showCartModal = false"/>
-  </main>
-</template>
