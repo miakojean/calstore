@@ -9,7 +9,7 @@ export default {
     props:{
         label:{
             type:String,
-            default:"voir produits"
+            default:"voir produit"
         }
     },
     emits:['clicked'],

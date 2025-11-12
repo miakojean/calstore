@@ -1,5 +1,5 @@
 <template>
-    <div class="product-card bg-white rounded-2xl p-4 sm:p-5 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 flex flex-col gap-4 relative overflow-hidden animate-fade-in">
+    <div class="product-card bg-white w-full rounded-2xl p-4 sm:p-5 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 flex flex-col gap-4 relative overflow-hidden animate-fade-in">
         <div class="image-container relative rounded-xl overflow-hidden bg-gray-50">
             <img 
                 :src="'/pic/' + product.image" 
