@@ -1,8 +1,8 @@
 import { defineStore } from "pinia";
 import { ref, computed } from 'vue'
 
-// Interface pour typer les éléments du panier
-interface CartItem {
+// Exportez l'interface pour qu'elle soit accessible
+export interface CartItem {
   id: string | number;
   name: string;
   price: number;

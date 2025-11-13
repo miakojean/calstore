@@ -14,13 +14,12 @@
       />
     </div>
     
-    <!-- Indicateurs -->
     <div class="carousel-indicators">
       <span 
         v-for="(product, index) in products" 
         :key="product.id || index"
         :class="['indicator', { active: currentIndex === index }]"
-        @click="scrollToIndex(index)"
+        @click="scrollToIndex(index, products.length)"
       ></span>
     </div>
 
@@ -34,7 +33,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import productcard from '../card/productcard.vue'
 import morebutton from '../button/morebutton.vue';
-import { useCartStore } from '@/stores/cartStore'
+import { useCartStore } from '../../stores/cartStore'
 
 // Interface pour les produits
 interface Product {
@@ -95,6 +94,15 @@ export default {
           description: "Parfaite pour cérémonie",
           rating: 4.2,
           reviewCount: 89
+        },
+        {
+          id: 3, // Attention: ID en double, vous devriez avoir un ID unique
+          name: "Soulier noir", 
+          price: 119.99,
+          image: "Copilot_20251107_112754.png",
+          description: "Parfaite pour cérémonie",
+          rating: 4.2,
+          reviewCount: 89
         }
       ]
     },
@@ -119,37 +127,89 @@ export default {
       })
     }
 
+    // --- LOGIQUE MISE À JOUR ---
+
+    /**
+     * Calcule la largeur de défilement pour un "pas" 
+     * (largeur d'une carte + l'espace 'gap')
+     */
+    const getStepWidth = (): number => {
+      if (scrollContainer.value && scrollContainer.value.children.length > 0) {
+        // 1. Obtenir la première carte
+        const firstCard = scrollContainer.value.children[0] as HTMLElement
+        // 2. Obtenir son style calculé
+        const cardStyle = window.getComputedStyle(firstCard)
+        // 3. Obtenir le style du conteneur (pour le 'gap')
+        const containerStyle = window.getComputedStyle(scrollContainer.value)
+
+        // 4. Calculer la largeur totale de la carte (incluant marge, si besoin)
+        const cardWidth = firstCard.offsetWidth + parseFloat(cardStyle.marginLeft) + parseFloat(cardStyle.marginRight)
+        
+        // 5. Obtenir l'espace 'gap'
+        // Utilise parseFloat pour gérer les "rem" ou "px" et || 0 comme fallback
+        const gap = parseFloat(containerStyle.gap) || 0 
+
+        // Le "pas" est la largeur de la carte + l'espace
+        return cardWidth + gap
+      }
+      return 0
+    }
+
+    /**
+     * Réinitialise le scroll et l'index
+     */
     const setupCarousel = () => {
       if (scrollContainer.value) {
         scrollContainer.value.scrollLeft = 0
       }
+      currentIndex.value = 0 // Important : réinitialiser l'index
     }
 
+    /**
+     * Met à jour l'index en fonction de la position de défilement
+     */
     const handleScroll = () => {
       if (scrollContainer.value) {
         const scrollLeft = scrollContainer.value.scrollLeft
-        const cardWidth = scrollContainer.value.offsetWidth
-        currentIndex.value = Math.round(scrollLeft / cardWidth)
+        const stepWidth = getStepWidth()
+
+        // S'assurer de ne pas diviser par zéro
+        if (stepWidth > 0) {
+          // Utiliser Math.round pour "snapper" à l'index le plus proche
+          currentIndex.value = Math.round(scrollLeft / stepWidth)
+        }
       }
     }
 
-    const scrollToIndex = (index: number) => {
+    /**
+     * Fait défiler le carrousel vers un index spécifique
+     */
+    const scrollToIndex = (index: number, productLength: number) => {
       if (scrollContainer.value) {
-        const cardWidth = scrollContainer.value.offsetWidth
+        const stepWidth = getStepWidth()
         scrollContainer.value.scrollTo({
-          left: index * cardWidth,
+          left: index * stepWidth,
           behavior: 'smooth'
         })
-      }
+      };
+      console.log(`vous avez ${productLength - 1} élements à afficher`)
     }
 
+    /**
+     * Gère le redimensionnement de la fenêtre
+     */
     const handleResize = () => {
-      // Réinitialiser le scroll lors du redimensionnement
+      // Réinitialise le carrousel pour recalculer les positions
       setupCarousel()
     }
+
+    // --- FIN DE LA LOGIQUE MISE À JOUR ---
 
     onMounted(() => {
-      setupCarousel()
+      // Attendre un tick que le DOM soit prêt, surtout pour getStepWidth
+      setTimeout(() => {
+        setupCarousel()
+      }, 0)
       
       // Observer les changements de taille pour le responsive
       if (scrollContainer.value) {
@@ -277,6 +337,7 @@ export default {
   }
 
   .category__container {
+    width: 100%;
     gap: 1.5rem;
     padding: 1.5rem 1rem;
   }
@@ -285,9 +346,10 @@ export default {
     flex: 0 0 calc(50% - 0.75rem);
   }
 
+  /* AMÉLIORATION : S'assurer qu'ils restent cachés 
   .carousel-indicators {
-    margin: 2rem 0;
-  }
+    display: none;
+  } */
 
   .indicator {
     width: 10px;
@@ -298,12 +360,15 @@ export default {
 /* Desktop */
 @media (min-width: 1024px) {
   .category-section {
-    padding: 3rem 2rem;
+    padding: 3rem 1rem;
   }
 
   .category__container {
+    width: 100%;
     gap: 2rem;
-    padding: 2rem;
+    padding: 2rem 1rem;
+    background:  #f0f4f8;;
+    border-radius: 0.5rem;
   }
 
   .category__container > * {
@@ -317,12 +382,20 @@ export default {
   .section-footer {
     padding: 0 2rem;
   }
+  
+  /* AMÉLIORATION : S'assurer qu'ils restent cachés 
+  .carousel-indicators {
+    display: none;
+  } */
 }
 
 /* Large Desktop */
 @media (min-width: 1280px) {
-  .category__container > * {
-    flex: 0 0 calc(25% - 1.5rem);
+
+  .category__container {
+    width: 100%;
+    gap: 2rem;
+    padding: 2rem;
   }
 }
 

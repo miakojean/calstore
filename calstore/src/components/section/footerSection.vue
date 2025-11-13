@@ -67,6 +67,28 @@
           </ul>
         </div>
 
+        <!-- Colonne 5: Newsletter -->
+        <div class="footer-column">
+          <h4 class="column-title">Newsletter</h4>
+          <div class="newsletter-section">
+            <p class="newsletter-text">
+              Inscrivez-vous pour recevoir nos offres exclusives et nouveautés
+            </p>
+            <div class="newsletter-form">
+              <input 
+                type="email" 
+                placeholder="Votre email" 
+                class="newsletter-input"
+              >
+              <button class="newsletter-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -100,6 +122,7 @@ export default {
   background: #000;
   color: #fff;
   margin-top: auto;
+  border-radius: 1rem;
 }
 
 .footer-main {
@@ -107,7 +130,7 @@ export default {
 }
 
 .footer-container {
-  max-width: 1200px;
+  max-width: 1500px;
   margin: 0 auto;
 }
 
@@ -235,32 +258,12 @@ export default {
   height: 20px;
 }
 
-/* Méthodes de paiement */
-.payment-methods {
-  border-top: 1px solid #333;
-  padding-top: 1rem;
-}
-
-.payment-icons {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.payment-icon {
-  font-size: 1.25rem;
-}
-
-.payment-text {
-  color: #ccc;
-  font-size: 0.8rem;
-}
-
 /* Footer bottom */
 .footer-bottom {
   border-top: 1px solid #333;
   padding: 1.5rem 1rem;
   background: #111;
+  width: 100%;
 }
 
 .footer-bottom-content {
@@ -340,7 +343,10 @@ export default {
 /* Large Desktop */
 @media (min-width: 1280px) {
   .footer-container {
+    width: 100%;
     gap: 4rem;
+    display: flex;
+    justify-content: space-around;
   }
 }
 </style>

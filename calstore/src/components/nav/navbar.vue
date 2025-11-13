@@ -4,14 +4,6 @@
       <h3>Calstore</h3>
     </div>
 
-    <!-- 
-      <ul class="nav__links">
-        <li>Accueil</li>
-        <li>Produits</li>
-        <li>Catégorie</li>
-      </ul>
-    -->
-
     <div class="btn__container">
       <cartButton @click="showCartModal"/>
     </div>
@@ -21,19 +13,26 @@
 <script lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import cartButton from '../button/cartButton.vue'
-import { useCartStore } from '@/stores/cartStore';
+import { useCartStore } from '../../stores/cartStore'
+
+// Définir les emits avec TypeScript
+interface Emits {
+  (e: 'opencart'): void
+}
 
 export default {
   name: 'Navbar',
   components: {
     cartButton,
   },
-  emits:['opencart'],
-  setup(props,{emit}) {
+  emits: {
+    opencart: null
+  },
+  setup(props, { emit }: { emit: Emits }) {
 
     const store = useCartStore()
 
-    const showCartModal = () =>{
+    const showCartModal = (): void => {
       emit("opencart");
     }
 
@@ -71,21 +70,23 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: fixed; /* ou sticky selon vos besoins */
+  position: fixed;
   top: 0;
   left: 0;
   z-index: 1000;
-  background-color: white; /* Assurez-vous d'avoir un fond */
-  transition: box-shadow 0.3s ease; /* Transition douce */
+  background-color: white;
+  transition: box-shadow 0.3s ease;
+  padding: 1rem;
 }
 
 .navbar.scrolled {
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Léger shadow en bas */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .logo h3{
-    font-size: 1.5rem;
-    font-weight: 500;
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin: 0;
 }
 
 .nav__links{

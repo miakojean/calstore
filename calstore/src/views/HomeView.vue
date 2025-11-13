@@ -2,7 +2,6 @@
   <main>
     <navbar @opencart="showCartModal = true"/>
     <TheWelcome />
-    <h3>Catégories de produits</h3>
     <categorysection />
     <categorysection 
       title="Sac à mains" 
@@ -11,29 +10,25 @@
     />
     <categorysection title="Perruques"/>
     <categorysection title="T-shirt"/>
-    <h3>Restez au courant des nouveautés</h3>
-    <newslettersection />
     <footerSection/>
     <cartmodal :isOpen="showCartModal" @close="showCartModal = false"/>
   </main>
 </template>
 
 <script>
-import { defineComponent, ref } from 'vue'
+import { ref } from 'vue';
 import TheWelcome from '../components/TheWelcome.vue'
 import navbar from '@/components/nav/navbar.vue';
 import categorysection from '@/components/section/categorysection.vue';
-import newslettersection from '@/components/section/newslettersection.vue';
 import cartmodal from '@/components/modal/cartmodal.vue';
 import footerSection from '@/components/section/footerSection.vue';
 
-export default defineComponent({
+export default {
   name: 'HomePage',
   components: {
     TheWelcome,
     navbar,
     categorysection,
-    newslettersection,
     cartmodal,
     footerSection
   },
@@ -77,5 +72,5 @@ export default defineComponent({
       handBag
     }
   }
-})
+}
 </script>
