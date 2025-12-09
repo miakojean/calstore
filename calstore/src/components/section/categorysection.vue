@@ -357,45 +357,50 @@ export default {
   }
 }
 
-/* Desktop */
+/* Desktop - Pleine largeur */
 @media (min-width: 1024px) {
   .category-section {
-    padding: 3rem 1rem;
+    width: 100%;           /* Force la largeur à 100% */
+    max-width: none;       /* ANNULE la limite de 1200px héritée du mode tablette */
+    margin: 0;             /* Enlève le centrage automatique */
+    padding: 3rem 2rem;    /* Un peu d'espace sur les bords de l'écran */
   }
 
   .category__container {
     width: 100%;
     gap: 2rem;
-    padding: 2rem 1rem;
-    background:  #f0f4f8;;
-    border-radius: 0.5rem;
+    padding: 0;           /* On enlève le padding interne du conteneur pour aligner avec le titre */
+    background: transparent; /* Optionnel : enlever le fond gris si on veut un look épuré */
+    
+    /* Configuration grille sans scroll */
+    overflow-x: visible;
+    flex-wrap: wrap;
+    justify-content: center; /* Aligne les produits à gauche */
   }
 
   .category__container > * {
-    flex: 0 0 calc(33.333% - 1.33rem);
+    /* CALCUL POUR 4 ITEMS PAR LIGNE (25%) 
+       C'est plus esthétique en pleine largeur que 3 items
+       La formule est : (100% / nb_items) - gap
+    */
+    flex: 0 0 calc(25% - 1.5rem); 
+    
+    scroll-snap-align: none;
   }
 
   .section-header {
-    padding: 0 2rem;
+    text-align: left;     /* Aligne le titre à gauche */
+    padding: 0;           /* Aligne avec les cartes */
+    margin-bottom: 2rem;
   }
 
   .section-footer {
-    padding: 0 2rem;
+    padding: 2rem 0 0 0;
   }
   
-  /* AMÉLIORATION : S'assurer qu'ils restent cachés 
+  /* On cache la navigation mobile */
   .carousel-indicators {
     display: none;
-  } */
-}
-
-/* Large Desktop */
-@media (min-width: 1280px) {
-
-  .category__container {
-    width: 100%;
-    gap: 2rem;
-    padding: 2rem;
   }
 }
 

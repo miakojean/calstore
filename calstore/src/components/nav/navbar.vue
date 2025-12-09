@@ -21,7 +21,7 @@ interface Emits {
 }
 
 export default {
-  name: 'Navbar',
+  name: 'navbar',
   components: {
     cartButton,
   },

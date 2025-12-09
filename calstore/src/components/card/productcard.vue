@@ -85,7 +85,6 @@ export default {
 .product-card {
     background: white;
     border-radius: 1rem;
-    padding: 0.75rem;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     border: 1px solid #f0f0f0;
     transition: all 0.3s ease;
@@ -173,7 +172,6 @@ export default {
     margin: 0;
     line-height: 1.3;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -184,7 +182,6 @@ export default {
     margin: 0;
     line-height: 1.4;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -259,7 +256,6 @@ export default {
 /* Responsive Design */
 @media (min-width: 425px) {
     .product-card {
-        padding: 1rem;
         gap: 1rem;
     }
     
@@ -281,7 +277,6 @@ export default {
 
 @media (min-width: 640px) {
     .product-card {
-        padding: 1.25rem;
         gap: 1.25rem;
     }
     
@@ -319,7 +314,7 @@ export default {
 
 @media (min-width: 768px) {
     .product-card {
-        padding: 1.5rem;
+        padding: 0.5rem;
     }
     
     .details-button-container {
@@ -329,7 +324,8 @@ export default {
 
 @media (min-width: 1024px) {
     .product-card {
-        padding: 1.75rem;
+        padding: 0.5rem;
+        max-width: 300px;
     }
     
     .product-name {
