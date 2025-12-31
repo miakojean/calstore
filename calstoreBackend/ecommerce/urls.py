@@ -1,7 +1,15 @@
 from django.urls import path
-from .views import (CategoryDetailAPIView, CategoryListAPIView)
+from .views import (CategoryDetailAPIView, CategoryListAPIView, CategoryProductsAPIView, CheckoutAPIView)
 
 urlpatterns = [
     path('category-list', view=CategoryListAPIView.as_view(), name="category-list"),
-    path('category-details', view=CategoryDetailAPIView.as_view(), name="category-details")
+    
+    # Changement ici : ajouter <slug:slug> pour accepter le paramètre
+    path('category-details/<slug:slug>', view=CategoryDetailAPIView.as_view(), name="category-details"),
+    
+    # Ajoutez aussi cette URL si vous voulez utiliser CategoryProductsAPIView
+    path('category-products/<slug:slug>', view=CategoryProductsAPIView.as_view(), name="category-products"),
+    
+    # URL pour le checkout
+    path('checkout/', view=CheckoutAPIView.as_view(), name="checkout"),
 ]

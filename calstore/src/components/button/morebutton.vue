@@ -1,5 +1,5 @@
 <template>
-    <button>
+    <button class="more__button">
         {{ label }}
         <span>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
@@ -35,19 +35,20 @@ export default {
 <style scoped>
 
 /* for mobile */
-button{
+.more__button{
     width: 100%;
     max-width: 300px;
     border: 1px solid var(--my-black-color);
     color: var(--my-black-color);
     padding: 0.7rem;
-    border-radius: 0.5rem;
+    border-radius: 1.5rem;
     font-size: 1rem;
     font-weight: 600;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 1rem;
+    cursor: pointer;
 }
 
 </style>

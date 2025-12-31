@@ -11,6 +11,7 @@
         :key="product.id || index" 
         :product="product"
         @add-to-cart="addToCart"
+        @show-product-detail="showProductDetail"
       />
     </div>
     
@@ -26,33 +27,30 @@
     <div class="section-footer">
       <morebutton :label="buttonLabel" @click="$emit('view-all')"/>
     </div>
+
+    <ProductDetailModal 
+      :isOpen="isOpen" 
+      :product="selectedProduct" 
+      @close="()=> isOpen = false" 
+      @add-to-cart="addToCart"
+    />
   </section>
 </template>
 
 <script lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, type PropType } from 'vue'
 import productcard from '../card/productcard.vue'
 import morebutton from '../button/morebutton.vue';
 import { useCartStore } from '../../stores/cartStore'
-
-// Interface pour les produits
-interface Product {
-  id: number | string;
-  name: string;
-  price: number;
-  image: string;
-  description?: string;
-  originalPrice?: number;
-  discount?: string;
-  rating?: number;
-  reviewCount?: number;
-}
+import type { Product } from '@/types/Product';
+import ProductDetailModal from '../modal/ProductDetailModal.vue';
 
 export default {
   name: 'CategorySection',
   components: {
     productcard,
-    morebutton
+    morebutton,
+    ProductDetailModal
   },
   props: {
     title: {
@@ -64,7 +62,7 @@ export default {
       default: "Découvrir notre panoplie de chaussures"
     },
     products: {
-      type: Array as () => Product[],
+      type: Array as PropType<Product[]>,
       default: () => [
         {
           id: 1,
@@ -72,8 +70,6 @@ export default {
           price: 89.99,
           image: "Copilot_20251107_112529.png",
           description: "Basket blanche élégante et confortable",
-          originalPrice: 129.99,
-          discount: "-30%",
           rating: 4.5,
           reviewCount: 128
         },
@@ -205,6 +201,13 @@ export default {
 
     // --- FIN DE LA LOGIQUE MISE À JOUR ---
 
+    const isOpen = ref(false);
+    const selectedProduct = ref<Product | null>(null);
+    const showProductDetail = (product: Product) => {
+      selectedProduct.value = product;
+      isOpen.value = true;
+    };
+
     onMounted(() => {
       // Attendre un tick que le DOM soit prêt, surtout pour getStepWidth
       setTimeout(() => {
@@ -227,6 +230,9 @@ export default {
     return {
       scrollContainer,
       currentIndex,
+      isOpen,
+      selectedProduct,
+      showProductDetail,
       handleScroll,
       scrollToIndex,
       addToCart
@@ -270,7 +276,7 @@ export default {
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
-  padding: 1rem 0.5rem;
+  padding: 1rem;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }

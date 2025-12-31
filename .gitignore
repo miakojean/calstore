@@ -185,3 +185,6 @@ jwt_secret.txt
 
 #rest api files
 *.http
+
+# static files
+*.png

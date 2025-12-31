@@ -133,7 +133,7 @@ class GuestCustomer(models.Model):
     """Client sans compte pour les commandes rapides"""
     email = models.EmailField()
     first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100, blank=True)
     phone = models.CharField(max_length=20)
     
     # Pour permettre la création de compte ultérieure

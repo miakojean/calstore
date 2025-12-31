@@ -9,7 +9,7 @@ export default {
     props:{
         label:{
             type:String,
-            default:"voir produit"
+            default:"voir produits"
         }
     },
     emits:['clicked'],
@@ -36,7 +36,7 @@ button{
     border: 1px solid var(--my-black-color);
     color: var(--my-black-color);
     padding: 0.7rem;
-    border-radius: 0.5rem;
+    border-radius: 1.5rem;
     font-size: 1rem;
     font-weight: 600;
 }

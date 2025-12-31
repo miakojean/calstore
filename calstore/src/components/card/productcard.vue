@@ -1,6 +1,7 @@
 <template>
     <div class="product-card">
         <div class="image-container">
+            <span v-if="product.discount" class="discount-badge">{{ product.discount }}</span>
             <img 
                 :src="'/pic/' + product.image" 
                 :alt="product.name" 
@@ -13,36 +14,30 @@
         </div>
 
         <div class="product-info">
-            <h4 class="product-name">{{ product.name }}</h4>
-            
-            <p class="product-description">{{ product.description }}</p>
-
-            <div class="price-section">
-                <div class="price-group">
-                    <span class="current-price">{{ product.price }} €</span>
-                    <span v-if="product.originalPrice" class="original-price">{{ product.originalPrice }} €</span>
-                    <span v-if="product.discount" class="discount">{{ product.discount }}</span>
-                </div>
-                <div class="details-button-container">
-                    <details-buton @click="showProductDetail"/>
-                </div>
+            <div class="product-details">
+                <h4 class="product-name">{{ product.name }}</h4>
+                <p class="product-description">{{ product.description }}</p>
             </div>
-            
-            <button 
-                @click="addToCart"
-                class="add-to-cart-btn"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="cart-icon">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
-                </svg>
-                Ajouter au panier
-            </button>
+
+            <div class="product-footer">
+                <div class="price-section">
+                    <div class="price-group">
+                        <span class="current-price">{{ product.price }} €</span>
+                        <span v-if="product.originalPrice" class="original-price">{{ product.originalPrice }} €</span>
+                    </div>
+                    <div class="details-button-container">
+                        <details-buton @click="showProductDetail"/>
+                    </div>
+                </div>
+                <addtocartbutton @click="addToCart"/>
+            </div>
         </div>
     </div>
 </template>
 
-<script>
+<script lang="ts">
 import detailsButon from '../button/detailsButon.vue';
+import addtocartbutton from '../button/addtocartbutton.vue';
 export default {
     props: {
         product: {
@@ -61,16 +56,17 @@ export default {
             })
         }
     },
-
+    emits: ['add-to-cart', 'show-product-detail'],
     components:{
         detailsButon,
+        addtocartbutton
     },
     methods: {
         addToCart() {
             this.$emit('add-to-cart', this.product)
         },
         showProductDetail() {
-            this.$emit('show-detail', this.product)
+            this.$emit('show-product-detail', this.product)
         },
         getStars(rating) {
             const fullStars = '★'.repeat(Math.floor(rating));
@@ -94,7 +90,9 @@ export default {
     position: relative;
     overflow: hidden;
     width: 100%;
+    min-width: 300px;
     animation: fadeIn 0.5s ease;
+    padding: 0.75rem;
 }
 
 .product-card:hover {
@@ -108,6 +106,20 @@ export default {
     overflow: hidden;
     background: #f8f9fa;
     aspect-ratio: 4/3;
+}
+
+.discount-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background-color: var(--primary-color, #ef4444);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .product-image {
@@ -197,7 +209,8 @@ export default {
     display: flex;
     align-items: center;
     gap: 0.25rem;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    width: 100%;
 }
 
 .current-price {
@@ -207,7 +220,7 @@ export default {
 }
 
 .original-price {
-    font-size: 0.875rem;
+    font-size: 0.5rem;
     color: #888;
     text-decoration: line-through;
 }
@@ -326,6 +339,7 @@ export default {
     .product-card {
         padding: 0.5rem;
         max-width: 300px;
+        min-width: 320px;
     }
     
     .product-name {

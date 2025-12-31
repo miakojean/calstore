@@ -36,6 +36,31 @@ class CategorySerializer(serializers.ModelSerializer):
             return obj.image.url
         return None
 
+class CategoryWithProductsSerializer(serializers.ModelSerializer):
+    """
+    Serializer pour Category incluant les produits associés
+    """
+    products = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Category
+        fields = [
+            'id',
+            'name',
+            'slug',
+            'description',
+            'image',
+            'is_active',
+            'products'
+        ]
+    
+    def get_products(self, obj):
+        """
+        Retourne la liste des produits associés à cette catégorie
+        """
+        products = obj.products.filter(is_active=True)
+        return ProductSerializer(products, many=True, context=self.context).data
+
 # --- 1. Sérialiseurs de base (Helpers) ---
 
 class BrandSerializer(serializers.ModelSerializer):

@@ -45,7 +45,7 @@ export default {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
-    padding: 1rem ;
+    padding: 0.6rem ;
     border-radius: 0.8rem;
     font-weight: 600;
     font-size: 1rem;

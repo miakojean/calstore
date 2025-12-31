@@ -2,9 +2,11 @@
   <section class="brand-section">
     <div class="brand-content">
       <div class="text-content">
-        <h2>Découvrer notre nouvel arrivage de sac à mains</h2>
+        <h2>Découvrez notre nouvel arrivage de sacs à main</h2>
+        <p class="discount-info">
+          🔥 Profitez de <span class="highlight">-30%</span> sur une sélection d'articles. Offre à durée limitée !
+        </p>
         <div class="btn__section">
-          
           <mainbutton/>
           <seconbutton/>
         </div>
@@ -62,6 +64,20 @@ export default {
   margin: 0;
 }
 
+.discount-info {
+  font-size: 1rem;
+  color: #555;
+  background-color: rgba(255, 224, 178, 0.5);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px dashed #ffb74d;
+}
+
+.discount-info .highlight {
+  font-weight: 700;
+  color: #ef6c00;
+}
+
 .btn__section {
   display: flex;
   gap: 1rem;
@@ -95,7 +111,7 @@ export default {
   }
   
   .btn__section {
-    width: auto;
+    width: 100%;
     flex-wrap: nowrap;
   }
 }

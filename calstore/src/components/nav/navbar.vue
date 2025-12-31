@@ -4,6 +4,13 @@
       <h3>Calstore</h3>
     </div>
 
+    <div class="nav__links">
+      <a href="#">Accueil</a>
+      <a href="#">Catégories</a>
+      <a href="#">À propos</a>
+      <a href="#">Contact</a>
+    </div>
+
     <div class="btn__container">
       <cartButton @click="showCartModal"/>
     </div>
