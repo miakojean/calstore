@@ -4,12 +4,13 @@
     <TheWelcome />
     <categorysection />
     <categorysection 
-      title="Sac à mains" 
+      title="Sac à mains"
+      slug="sac_a_mains" 
       :products="handBag"
       description="Découvrer nos nouveautés de sacs à mains"
     />
-    <categorysection title="Perruques"/>
-    <categorysection title="T-shirt"/>
+    <categorysection title="Perruques" slug="	technologie"/>
+    <categorysection title="T-shirt" slug="t_shirt"/>
     <footerSection/>
     <cartmodal :isOpen="showCartModal" @close="showCartModal = false"/>
   </main>

@@ -13,6 +13,7 @@
         @add-to-cart="addToCart"
         @show-product-detail="showProductDetail"
       />
+      <!-- <ProductCardSkeleton v-for="n in 4" :key="n"/> -->
     </div>
     
     <div class="carousel-indicators">
@@ -39,9 +40,17 @@
 
 <script lang="ts">
 import { ref, onMounted, onUnmounted, type PropType } from 'vue'
+
+// comporents
 import productcard from '../card/productcard.vue'
 import morebutton from '../button/morebutton.vue';
+import ProductCardSkeleton from '../card/ProductCardSkeleton.vue';
+
+//Store
 import { useCartStore } from '../../stores/cartStore'
+import { useCategoryStore } from '@/stores/categoryStore';
+
+//Types
 import type { Product } from '@/types/Product';
 import ProductDetailModal from '../modal/ProductDetailModal.vue';
 
@@ -50,7 +59,8 @@ export default {
   components: {
     productcard,
     morebutton,
-    ProductDetailModal
+    ProductDetailModal,
+    ProductCardSkeleton
   },
   props: {
     title: {
@@ -105,13 +115,18 @@ export default {
     buttonLabel: {
       type: String,
       default: "Voir tous les articles"
+    },
+    slug:{
+      type: String,
+      default: "chaussures"
     }
   },
   emits: ['view-all'],
   setup(props, { emit }) {
     const scrollContainer = ref<HTMLElement | null>(null)
-    const currentIndex = ref(0)
-    const cartStore = useCartStore()
+    const currentIndex = ref(0);
+    const cartStore = useCartStore();
+    const categoryStore = useCategoryStore();
     let resizeObserver: ResizeObserver | null = null
 
     const addToCart = (product: Product) => {
@@ -208,7 +223,10 @@ export default {
       isOpen.value = true;
     };
 
-    onMounted(() => {
+    // Logique pour le fetching de données avec l'utilisation du store
+
+
+    onMounted(async() => {
       // Attendre un tick que le DOM soit prêt, surtout pour getStepWidth
       setTimeout(() => {
         setupCarousel()
@@ -219,6 +237,9 @@ export default {
         resizeObserver = new ResizeObserver(handleResize)
         resizeObserver.observe(scrollContainer.value)
       }
+
+      // Fetch des produits de la catégorie via le store
+      await categoryStore.fetchCategoryWithProducts(`${props.slug}`);
     })
 
     onUnmounted(() => {
@@ -228,6 +249,7 @@ export default {
     })
 
     return {
+      categoryStore,
       scrollContainer,
       currentIndex,
       isOpen,
