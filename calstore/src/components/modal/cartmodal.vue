@@ -48,11 +48,11 @@
                 :key="item.id" 
                 class="cart-item"
               >
-                <img :src="'/pic/'+item.image" :alt="item.name" class="item-image">
+                <img :src="item.image || item.main_image_url || '/pic/placeholder-product.jpg'" :alt="item.name" class="item-image">
                 
                 <div class="item-details">
                   <h4 class="item-name">{{ item.name }}</h4>
-                  <p class="item-price">{{ item.price }} €</p>
+                  <p class="item-price">{{ item.price }} FCFA</p>
                   
                   <div class="quantity-controls">
                     <button 
@@ -73,7 +73,7 @@
                 </div>
 
                 <div class="item-total">
-                  <span class="total-price">{{ (item.price * item.quantity).toFixed(2) }} €</span>
+                  <span class="total-price">{{ (item.price * item.quantity).toFixed(2) }} FCFA</span>
                   <button 
                     class="remove-btn"
                     @click="removeFromCart(item.id)"
@@ -86,9 +86,9 @@
 
             <!-- Résumé de commande -->
             <div class="order-summary">
-              <div class="summary-line">
-                <span>Sous-total</span>
-                <span>{{ totalPrice }} €</span>
+              <div class="summary-line total">
+                <span>Total</span>
+                <span class="final-price">{{ formattedTotalPrice }} FCFA</span>
               </div>
               <div class="summary-line">
                 <span>Livraison</span>
@@ -96,7 +96,7 @@
               </div>
               <div class="summary-line total">
                 <span>Total</span>
-                <span class="final-price">{{ totalPrice }} €</span>
+                <span class="final-price">{{ totalPrice }} FCFA</span>
               </div>
             </div>
           </div>
@@ -105,7 +105,7 @@
         <!-- Footer avec CTA -->
         <div class="cart-footer" v-if="!isEmpty">
           <button class="checkout-btn" @click="proceedToCheckout">
-            <span class="btn-text">Commander • {{ totalPrice }} €</span>
+            <span class="btn-text">Commander • {{ formattedTotalPrice }} FCFA</span>
             <span class="btn-arrow">→</span>
           </button>
         </div>
@@ -132,51 +132,37 @@ export default {
     const isClosing = ref(false)
 
     const closeModal = () => {
-      // Déclencher l'animation de fermeture
       isClosing.value = true
-      
-      // Attendre la fin de l'animation avant d'émettre l'événement
       setTimeout(() => {
         emit('close')
         isClosing.value = false
-      }, 300) // Durée de l'animation
+      }, 300)
     }
 
+    // Procéder au paiement
+
+    const step = ref(1) // Première étape du paiement
     const proceedToCheckout = () => {
       console.log('Procéder au paiement')
       closeModal()
     }
 
-    // Computed values from store
-    const cart = computed(() => cartStore.cart)
-    const totalItems = computed(() => cartStore.totalItems)
-    const totalPrice = computed(() => cartStore.totalPrice.toFixed(2))
-    const isEmpty = computed(() => cartStore.isEmpty)
-
-    // Cart actions
-    const increaseQuantity = (itemId) => {
-      cartStore.increaseQuantity(itemId)
-    }
-
-    const decreaseQuantity = (itemId) => {
-      cartStore.decreaseQuantity(itemId)
-    }
-
-    const removeFromCart = (itemId) => {
-      cartStore.removeFromCart(itemId)
-    }
+    // Formater le prix total pour l'affichage
+    const formattedTotalPrice = computed(() => {
+      return cartStore.totalPrice.toFixed(2)
+    })
 
     return {
       closeModal,
       proceedToCheckout,
-      cart,
-      totalItems,
-      totalPrice,
-      isEmpty,
+      cart: cartStore.cart,
+      totalItems: cartStore.totalItems,
+      formattedTotalPrice,
+      isEmpty: cartStore.isEmpty,
       isClosing,
-      increaseQuantity,
-      decreaseQuantity,
-      removeFromCart
+      increaseQuantity: cartStore.increaseQuantity,
+      decreaseQuantity: cartStore.decreaseQuantity,
+      removeFromCart: cartStore.removeFromCart
     }
   }
 }

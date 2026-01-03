@@ -1,6 +1,9 @@
 # serializers.py
 from rest_framework import serializers
-from .models import Category, Brand, Product, ProductImage, ProductVariant
+from .models import (
+    Category, Brand, Product, ProductImage, ProductVariant,
+    Order, OrderItem, Customer, GuestCustomer, Address, Cart, CartItem
+)
 
 # --- Sérialiseurs de base ---
 
@@ -121,6 +124,67 @@ class CategoryWithProductsSerializer(serializers.ModelSerializer):
 
 # --- Sérialiseurs pour Catégorie ---
 
+# --- Serialiseur pour la cart ---
+# --- Serializers pour Cart ---
+
+class CartItemSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)
+    variant = ProductVariantSerializer(read_only=True)
+    unit_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    total_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    
+    # Pour l'ajout/modification d'items
+    product_id = serializers.IntegerField(write_only=True)
+    variant_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
+
+    class Meta:
+        model = CartItem
+        fields = [
+            'id', 'product', 'variant', 'quantity', 
+            'unit_price', 'total_price', 'added_at',
+            'product_id', 'variant_id'
+        ]
+
+class CartSerializer(serializers.ModelSerializer):
+    items = CartItemSerializer(many=True, read_only=True)
+    total_items = serializers.IntegerField(read_only=True)
+    subtotal = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    total_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = Cart
+        fields = [
+            'id', 'customer', 'guest_customer', 'session_key',
+            'items', 'total_items', 'subtotal', 'total_price',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+class AddToCartSerializer(serializers.Serializer):
+    """Serializer pour ajouter un produit au panier"""
+    product_id = serializers.IntegerField()
+    variant_id = serializers.IntegerField(required=False, allow_null=True)
+    quantity = serializers.IntegerField(min_value=1, default=1)
+
+    def validate_product_id(self, value):
+        try:
+            Product.objects.get(id=value, is_active=True)
+        except Product.DoesNotExist:
+            raise serializers.ValidationError("Produit introuvable ou inactif.")
+        return value
+
+    def validate_variant_id(self, value):
+        if value:
+            try:
+                ProductVariant.objects.get(id=value, is_active=True)
+            except ProductVariant.DoesNotExist:
+                raise serializers.ValidationError("Variante introuvable ou inactive.")
+        return value
+
+class UpdateCartItemSerializer(serializers.Serializer):
+    """Serializer pour modifier la quantité d'un item"""
+    quantity = serializers.IntegerField(min_value=1)
+
 class CategorySerializer(serializers.ModelSerializer):
     """
     Sérialiseur simple pour le modèle Category.
@@ -212,3 +276,62 @@ class CategoryWithProductsSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(main_img.image.url)
             return main_img.image.url
         return None
+    
+# --- Serialiseur pour la gestion des commandes (Orders) ---
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)
+
+    class Meta:
+        model = OrderItem
+        fields = ['id', 'product', 'quantity', 'unit_price', 'total_price']
+
+class OrderSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True, read_only=True)
+    customer = serializers.StringRelatedField()  # Affiche une représentation lisible du client
+
+    class Meta:
+        model = Order
+        fields = [
+            'id', 'order_number', 'customer', 'status', 
+            'total_amount', 'created_at', 'updated_at', 'items'
+        ]
+    
+# --- Serialiseur pour le checkout ---
+class CheckoutSerializer(serializers.Serializer):
+    """
+    Sérialiseur pour gérer les données du checkout ou la validation de la commande.
+    """
+    cart_id = serializers.UUIDField()
+    shipping_address = serializers.CharField(max_length=500)
+    billing_address = serializers.CharField(max_length=500)
+    payment_method = serializers.ChoiceField(choices=['credit_card', 'paypal', 'stripe'])
+    email = serializers.EmailField()
+    phone_number = serializers.CharField(max_length=20, required=False)
+    special_instructions = serializers.CharField(max_length=1000, required=False, allow_blank=True)
+    apply_discount_code = serializers.CharField(max_length=50, required=False, allow_blank=True)
+    agree_terms = serializers.BooleanField()
+    subscribe_newsletter = serializers.BooleanField(required=False)
+    gift_option = serializers.BooleanField(required=False)
+    gift_message = serializers.CharField(max_length=500, required=False, allow_blank=True)
+    save_info = serializers.BooleanField(required=False)
+    preferred_delivery_date = serializers.DateField(required=False)
+    preferred_delivery_time = serializers.TimeField(required=False)
+    referral_code = serializers.CharField(max_length=50, required=False, allow_blank=True)
+    marketing_consent = serializers.BooleanField(required=False)
+    device_info = serializers.CharField(max_length=500, required=False, allow_blank=True)
+
+    def validate_agree_terms(self, value):
+        if not value:
+            raise serializers.ValidationError("You must agree to the terms and conditions.")
+        return value
+    
+    def validate_cart_id(self, value):
+        # Ici, vous pouvez ajouter une logique pour vérifier si le panier existe
+        from .models import Cart
+        try:
+            cart = Cart.objects.get(id=value)
+        except Cart.DoesNotExist:
+            raise serializers.ValidationError("Invalid cart ID.")
+        return value
+    # Vous pouvez ajouter d'autres validations personnalisées si nécessaire

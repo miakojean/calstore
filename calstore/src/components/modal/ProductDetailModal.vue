@@ -5,14 +5,14 @@
         <button class="close-btn" @click="close">&times;</button>
         <div v-if="product" class="product-details">
           <div class="product-image-container">
-            <img :src="'/pic/' + product.image" :alt="product.name" class="product-image">
+            <img :src="product && product.main_image_url ? product.main_image_url : (product && product.image ? ('/pic/' + product.image) : '')" :alt="product?.name" class="product-image">
           </div>
           <div class="product-info">
             <h2 class="product-name">{{ product.name }}</h2>
             <p class="product-description">{{ product.description }}</p>
             <div class="price-section">
-              <span class="current-price">{{ product.price }} €</span>
-              <span v-if="product.originalPrice" class="original-price">{{ product.originalPrice }} €</span>
+              <span class="current-price">{{ product.price }} FCFA</span>
+              <span v-if="product.originalPrice" class="original-price">{{ product.originalPrice }} FCFA</span>
             </div>
             <div v-if="product.rating" class="rating-section">
               <span class="stars">{{ getStars(product.rating) }}</span>
@@ -28,7 +28,7 @@
 
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
-import type { Product } from '@/types/Product';
+import type { Product } from '../../types/Product';
 import addtocartbutton from '../button/addtocartbutton.vue';
 
 export default defineComponent({
@@ -43,7 +43,8 @@ export default defineComponent({
     },
     product: {
       type: Object as PropType<Product | null>,
-      required: true,
+      required: false,
+      default: null,
     },
   },
   emits: ['close', 'add-to-cart'],
@@ -156,15 +157,15 @@ export default defineComponent({
 }
 
 .rating-section {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #666;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #666;
 }
 
 .stars {
-    color: #f5a623;
-    font-size: 1.1rem;
+  color: #f5a623;
+  font-size: 1.1rem;
 }
 
 /* Animation */

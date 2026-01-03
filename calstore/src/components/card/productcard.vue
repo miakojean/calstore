@@ -1,29 +1,37 @@
 <template>
     <div class="product-card">
         <div class="image-container">
-            <span v-if="product.discount" class="discount-badge">{{ product.discount }}</span>
+            <!-- Afficher le badge de réduction si discount_percentage > 0 -->
+            <span v-if="product.discount_percentage > 0" class="discount-badge">
+                -{{ product.discount_percentage }}%
+            </span>
+            <!-- CORRECTION ICI : Utiliser images[0].image ou main_image_url -->
             <img 
-                :src="'/pic/' + product.image" 
+                :src="product.main_image_url" 
                 :alt="product.name" 
                 class="product-image"
+                @error="handleImageError"
             >
             <!-- Overlay pour desktop -->
             <div class="overlay">
-                <button class="quick-view-btn">Détail du produit</button>
+                <button class="quick-view-btn" @click="showProductDetail">Détail du produit</button>
             </div>
         </div>
 
         <div class="product-info">
             <div class="product-details">
                 <h4 class="product-name">{{ product.name }}</h4>
-                <p class="product-description">{{ product.description }}</p>
+                <p class="product-description">{{ product.short_description }}</p>
             </div>
 
             <div class="product-footer">
                 <div class="price-section">
                     <div class="price-group">
-                        <span class="current-price">{{ product.price }} €</span>
-                        <span v-if="product.originalPrice" class="original-price">{{ product.originalPrice }} €</span>
+                        <span class="current-price">{{ formatPrice(product.price) }}</span>
+                        <!-- Afficher le prix comparé si disponible -->
+                        <span v-if="product.compare_price" class="original-price">
+                            {{ formatPrice(product.compare_price) }}
+                        </span>
                     </div>
                     <div class="details-button-container">
                         <details-buton @click="showProductDetail"/>
@@ -38,21 +46,22 @@
 <script lang="ts">
 import detailsButon from '../button/detailsButon.vue';
 import addtocartbutton from '../button/addtocartbutton.vue';
+import type { Product } from '../../stores/categoryStore';
+
 export default {
     props: {
         product: {
-            type: Object,
+            type: Object as () => Product,
             required: true,
             default: () => ({
                 id: 1,
                 name: "Basket simple blanche",
                 price: 89.99,
-                image: "Copilot_20251107_112529.png",
-                description: "Basket blanche élégante et confortable",
-                originalPrice: null,
-                discount: null,
-                rating: null,
-                reviewCount: null
+                images: [],
+                short_description: "Description courte",
+                description: "Description complète",
+                discount_percentage: 0,
+                compare_price: null
             })
         }
     },
@@ -61,6 +70,7 @@ export default {
         detailsButon,
         addtocartbutton
     },
+    
     methods: {
         addToCart() {
             this.$emit('add-to-cart', this.product)
@@ -68,16 +78,34 @@ export default {
         showProductDetail() {
             this.$emit('show-product-detail', this.product)
         },
-        getStars(rating) {
+        getStars(rating: number) {
             const fullStars = '★'.repeat(Math.floor(rating));
             const emptyStars = '☆'.repeat(5 - Math.floor(rating));
             return fullStars + emptyStars;
+        },
+        // Formater le prix
+        formatPrice(price: string | number): string {
+            if (!price) return '0,00 €';
+            
+            const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+            
+            // Format français : 15 000,00 €
+            return numPrice.toLocaleString('fr-FR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }) + ' FCFA';
+        },
+        // Gérer les erreurs d'image
+        handleImageError(event: Event) {
+            const img = event.target as HTMLImageElement;
+            img.src = '/images/placeholder-product.jpg';
         }
     }
 }
 </script>
 
 <style scoped>
+/* VOTRE STYLE EXISTANT - inchangé */
 .product-card {
     background: white;
     border-radius: 1rem;

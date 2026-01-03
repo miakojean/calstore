@@ -5,23 +5,29 @@
       <p class="section-description">{{ description }}</p>
     </div>
     
-    <div class="category__container" ref="scrollContainer" @scroll="handleScroll">
+    <!-- État de chargement -->
+    <div v-if="categoryStore.loadingStates[slug]" class="category__container">
+      <ProductCardSkeleton v-for="n in 4" :key="`skeleton-${n}`"/>
+    </div>
+    
+    <!-- État normal -->
+    <div v-else class="category__container" ref="scrollContainer" @scroll="handleScroll">
       <productcard 
         v-for="(product, index) in products" 
-        :key="product.id || index" 
+        :key="product.id || `product-${index}`" 
         :product="product"
         @add-to-cart="addToCart"
         @show-product-detail="showProductDetail"
       />
-      <!-- <ProductCardSkeleton v-for="n in 4" :key="n"/> -->
     </div>
     
-    <div class="carousel-indicators">
+    <!-- Indicateurs seulement si chargement terminé et produits existent -->
+    <div v-if="!categoryStore.loadingStates[slug] && products.length > 0" class="carousel-indicators">
       <span 
         v-for="(product, index) in products" 
-        :key="product.id || index"
+        :key="product.id || `indicator-${index}`"
         :class="['indicator', { active: currentIndex === index }]"
-        @click="scrollToIndex(index, products.length)"
+        @click="scrollToIndex(index)"
       ></span>
     </div>
 
@@ -32,27 +38,24 @@
     <ProductDetailModal 
       :isOpen="isOpen" 
       :product="selectedProduct" 
-      @close="()=> isOpen = false" 
+      @close="closeModal" 
       @add-to-cart="addToCart"
     />
   </section>
 </template>
 
 <script lang="ts">
-import { ref, onMounted, onUnmounted, type PropType } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 
-// comporents
+// Components
 import productcard from '../card/productcard.vue'
 import morebutton from '../button/morebutton.vue';
 import ProductCardSkeleton from '../card/ProductCardSkeleton.vue';
-
-//Store
-import { useCartStore } from '../../stores/cartStore'
-import { useCategoryStore } from '@/stores/categoryStore';
-
-//Types
-import type { Product } from '@/types/Product';
 import ProductDetailModal from '../modal/ProductDetailModal.vue';
+
+// Store et Types
+import { useCartStore } from '../../stores/cartStore'
+import { useCategoryStore, type Product } from '../../stores/categoryStore';
 
 export default {
   name: 'CategorySection',
@@ -71,52 +74,11 @@ export default {
       type: String,
       default: "Découvrir notre panoplie de chaussures"
     },
-    products: {
-      type: Array as PropType<Product[]>,
-      default: () => [
-        {
-          id: 1,
-          name: "Basket simple blanche",
-          price: 89.99,
-          image: "Copilot_20251107_112529.png",
-          description: "Basket blanche élégante et confortable",
-          rating: 4.5,
-          reviewCount: 128
-        },
-        {
-          id: 2,
-          name: "Basket running noire", 
-          price: 119.99,
-          image: "Copilot_20251107_112743.png",
-          description: "Parfaite pour le sport",
-          rating: 4.2,
-          reviewCount: 89
-        },
-        {
-          id: 3,
-          name: "Soulier noir", 
-          price: 119.99,
-          image: "Copilot_20251107_112754.png",
-          description: "Parfaite pour cérémonie",
-          rating: 4.2,
-          reviewCount: 89
-        },
-        {
-          id: 3, // Attention: ID en double, vous devriez avoir un ID unique
-          name: "Soulier noir", 
-          price: 119.99,
-          image: "Copilot_20251107_112754.png",
-          description: "Parfaite pour cérémonie",
-          rating: 4.2,
-          reviewCount: 89
-        }
-      ]
-    },
     buttonLabel: {
       type: String,
       default: "Voir tous les articles"
     },
-    slug:{
+    slug: {
       type: String,
       default: "chaussures"
     }
@@ -128,118 +90,104 @@ export default {
     const cartStore = useCartStore();
     const categoryStore = useCategoryStore();
     let resizeObserver: ResizeObserver | null = null
+    
+    // État modal
+    const isOpen = ref(false);
+    const selectedProduct = ref<Product | null>(null);
+    
+    // CHANGEZ CECI : Utiliser les computed spécifiques à la catégorie
+    const products = computed(() => {
+      return categoryStore.getProductsBySlug(props.slug).value;
+    });
+    
+    const isLoading = computed(() => {
+      return categoryStore.isLoadingForSlug(props.slug).value;
+    });
 
     const addToCart = (product: Product) => {
       cartStore.addToCart({
         id: product.id,
         name: product.name,
         price: product.price,
-        image: product.image
+        image: product.main_image_url || ''
       })
     }
 
-    // --- LOGIQUE MISE À JOUR ---
+    const showProductDetail = (product: Product) => {
+      selectedProduct.value = product;
+      isOpen.value = true;
+    };
 
-    /**
-     * Calcule la largeur de défilement pour un "pas" 
-     * (largeur d'une carte + l'espace 'gap')
-     */
+    const closeModal = () => {
+      isOpen.value = false;
+      selectedProduct.value = null;
+    };
+
+    // --- LOGIQUE CARROUSEL ---
+    
     const getStepWidth = (): number => {
       if (scrollContainer.value && scrollContainer.value.children.length > 0) {
-        // 1. Obtenir la première carte
         const firstCard = scrollContainer.value.children[0] as HTMLElement
-        // 2. Obtenir son style calculé
         const cardStyle = window.getComputedStyle(firstCard)
-        // 3. Obtenir le style du conteneur (pour le 'gap')
         const containerStyle = window.getComputedStyle(scrollContainer.value)
 
-        // 4. Calculer la largeur totale de la carte (incluant marge, si besoin)
         const cardWidth = firstCard.offsetWidth + parseFloat(cardStyle.marginLeft) + parseFloat(cardStyle.marginRight)
-        
-        // 5. Obtenir l'espace 'gap'
-        // Utilise parseFloat pour gérer les "rem" ou "px" et || 0 comme fallback
         const gap = parseFloat(containerStyle.gap) || 0 
 
-        // Le "pas" est la largeur de la carte + l'espace
         return cardWidth + gap
       }
       return 0
     }
 
-    /**
-     * Réinitialise le scroll et l'index
-     */
     const setupCarousel = () => {
       if (scrollContainer.value) {
         scrollContainer.value.scrollLeft = 0
       }
-      currentIndex.value = 0 // Important : réinitialiser l'index
+      currentIndex.value = 0
     }
 
-    /**
-     * Met à jour l'index en fonction de la position de défilement
-     */
     const handleScroll = () => {
       if (scrollContainer.value) {
         const scrollLeft = scrollContainer.value.scrollLeft
         const stepWidth = getStepWidth()
 
-        // S'assurer de ne pas diviser par zéro
         if (stepWidth > 0) {
-          // Utiliser Math.round pour "snapper" à l'index le plus proche
           currentIndex.value = Math.round(scrollLeft / stepWidth)
         }
       }
     }
 
-    /**
-     * Fait défiler le carrousel vers un index spécifique
-     */
-    const scrollToIndex = (index: number, productLength: number) => {
+    const scrollToIndex = (index: number) => {
       if (scrollContainer.value) {
         const stepWidth = getStepWidth()
         scrollContainer.value.scrollTo({
           left: index * stepWidth,
           behavior: 'smooth'
         })
-      };
-      console.log(`vous avez ${productLength - 1} élements à afficher`)
+      }
     }
 
-    /**
-     * Gère le redimensionnement de la fenêtre
-     */
     const handleResize = () => {
-      // Réinitialise le carrousel pour recalculer les positions
       setupCarousel()
     }
-
-    // --- FIN DE LA LOGIQUE MISE À JOUR ---
-
-    const isOpen = ref(false);
-    const selectedProduct = ref<Product | null>(null);
-    const showProductDetail = (product: Product) => {
-      selectedProduct.value = product;
-      isOpen.value = true;
-    };
-
-    // Logique pour le fetching de données avec l'utilisation du store
-
+    // --- FIN LOGIQUE CARROUSEL ---
 
     onMounted(async() => {
-      // Attendre un tick que le DOM soit prêt, surtout pour getStepWidth
+      // Initialiser le carrousel
       setTimeout(() => {
         setupCarousel()
-      }, 0)
+      }, 100)
       
-      // Observer les changements de taille pour le responsive
+      // Observer les changements de taille
       if (scrollContainer.value) {
         resizeObserver = new ResizeObserver(handleResize)
         resizeObserver.observe(scrollContainer.value)
       }
 
-      // Fetch des produits de la catégorie via le store
-      await categoryStore.fetchCategoryWithProducts(`${props.slug}`);
+      // Récupérer les produits de la catégorie seulement si nécessaire
+      if (products.value.length === 0) {
+        await categoryStore.fetchCategoryWithProducts(props.slug);
+      }
     })
 
     onUnmounted(() => {
@@ -254,7 +202,10 @@ export default {
       currentIndex,
       isOpen,
       selectedProduct,
+      products,
+      isLoading, // <-- Ajoutez ceci
       showProductDetail,
+      closeModal,
       handleScroll,
       scrollToIndex,
       addToCart
@@ -374,11 +325,6 @@ export default {
     flex: 0 0 calc(50% - 0.75rem);
   }
 
-  /* AMÉLIORATION : S'assurer qu'ils restent cachés 
-  .carousel-indicators {
-    display: none;
-  } */
-
   .indicator {
     width: 10px;
     height: 10px;
@@ -388,37 +334,29 @@ export default {
 /* Desktop - Pleine largeur */
 @media (min-width: 1024px) {
   .category-section {
-    width: 100%;           /* Force la largeur à 100% */
-    max-width: none;       /* ANNULE la limite de 1200px héritée du mode tablette */
-    margin: 0;             /* Enlève le centrage automatique */
-    padding: 3rem 2rem;    /* Un peu d'espace sur les bords de l'écran */
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 3rem 2rem;
   }
 
   .category__container {
     width: 100%;
     gap: 2rem;
-    padding: 0;           /* On enlève le padding interne du conteneur pour aligner avec le titre */
-    background: transparent; /* Optionnel : enlever le fond gris si on veut un look épuré */
-    
-    /* Configuration grille sans scroll */
+    padding: 0;
     overflow-x: visible;
     flex-wrap: wrap;
-    justify-content: center; /* Aligne les produits à gauche */
+    justify-content: center;
   }
 
   .category__container > * {
-    /* CALCUL POUR 4 ITEMS PAR LIGNE (25%) 
-       C'est plus esthétique en pleine largeur que 3 items
-       La formule est : (100% / nb_items) - gap
-    */
-    flex: 0 0 calc(25% - 1.5rem); 
-    
+    flex: 0 0 calc(25% - 1.5rem);
     scroll-snap-align: none;
   }
 
   .section-header {
-    text-align: left;     /* Aligne le titre à gauche */
-    padding: 0;           /* Aligne avec les cartes */
+    text-align: left;
+    padding: 0;
     margin-bottom: 2rem;
   }
 
@@ -426,7 +364,7 @@ export default {
     padding: 2rem 0 0 0;
   }
   
-  /* On cache la navigation mobile */
+  /* Cache la navigation mobile sur desktop */
   .carousel-indicators {
     display: none;
   }

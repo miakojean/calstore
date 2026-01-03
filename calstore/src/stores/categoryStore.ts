@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { ref, computed } from 'vue'
 import api from "@/_services/api";
 
-// Exportez l'interface pour qu'elle soit accessible
+// Interfaces exportées
 export interface Category {
     id: number | string;
     name: string;
@@ -19,6 +19,7 @@ export interface Product {
     id: number | string;
     name: string;
     slug: string;
+    short_description?: string;
     description: string;
     price: number;
     compare_price?: number;
@@ -38,95 +39,108 @@ export interface Product {
 const useCategoryStore = defineStore('category', () => {
     
     // State - Données des catégories
-    const currentCategory = ref<Category | null>(null);  // Changé de nom pour éviter conflit
+    const currentCategory = ref<Category | null>(null);
     const categories = ref<Category[]>([]);
-    const categoryProducts = ref<Product[]>([]);  // Nouveau state pour les produits de la catégorie
-    const isLoading = ref<boolean>(false);
+    
+    // CHANGEZ CECI : stocker les produits par catégorie
+    const categoryProducts = ref<Record<string, Product[]>>({}); // { 'chaussures': [...], 'sac_a_mains': [...] }
+    
+    // CHANGEZ CECI : stocker le loading par catégorie
+    const loadingStates = ref<Record<string, boolean>>({});
+    
     const error = ref<string | null>(null);
 
     // Computed
     const totalCategories = computed(() => categories.value.length);
-    const totalProductsInCategory = computed(() => categoryProducts.value.length);
+    
+    // Nouveau computed pour récupérer les produits d'une catégorie spécifique
+    const getProductsBySlug = (slug: string) => {
+        return computed(() => categoryProducts.value[slug] || []);
+    };
+    
+    const isLoadingForSlug = (slug: string) => {
+        return computed(() => loadingStates.value[slug] || false);
+    };
 
     // Actions
-    const fetchCategoryWithProducts = async (categorySlug: string) => {  // Renommé le paramètre
-        isLoading.value = true;
+    const fetchCategoryWithProducts = async (categorySlug: string) => {
+        // Réinitialiser le loading pour cette catégorie
+        loadingStates.value[categorySlug] = true;
         error.value = null;
         
         try {
             const response = await api.get(`/ecommerce/category-products/${categorySlug}`);
             
             if (response.data && response.data.status === 'success') {
+                // Stocker les produits par catégorie
+                categoryProducts.value[categorySlug] = response.data.products || [];
                 
-                currentCategory.value = response.data.category_data;
-                categoryProducts.value = response.data.products;
-                
-                console.log("Catégorie récupérée :", currentCategory.value);
-                console.log("Produits récupérés :", categoryProducts.value);
+                console.log(`✅ Produits récupérés pour ${categorySlug}:`, categoryProducts.value[categorySlug]);
             } else {
                 error.value = response.data?.message || 'Erreur inconnue';
+                console.error(`❌ Erreur API pour ${categorySlug}:`, response.data);
             }
         } catch (err: any) {
-            console.error("Erreur lors de la récupération de la catégorie :", err);
+            console.error(`❌ Erreur pour ${categorySlug}:`, err);
             error.value = err.response?.data?.message || err.message || 'Erreur réseau';
         } finally {
-            isLoading.value = false;
+            loadingStates.value[categorySlug] = false;
         }
     }
 
-    // Si vous voulez aussi récupérer toutes les catégories
     const fetchAllCategories = async () => {
-        isLoading.value = true;
+        // Garder un loading global pour toutes les catégories
+        loadingStates.value['all'] = true;
         error.value = null;
         
         try {
             const response = await api.get('/ecommerce/category-list');
             
             if (response.data && response.data.status === 'success') {
-                // Votre API retourne :
-                // {
-                //   status: 'success',
-                //   message: '...',
-                //   count: X,
-                //   data: [...]  // <- Liste des catégories
-                // }
-                
-                categories.value = response.data.data;
-                console.log("Toutes les catégories récupérées :", categories.value);
+                categories.value = response.data.data || [];
+                console.log("✅ Toutes les catégories récupérées :", categories.value);
             } else {
                 error.value = response.data?.message || 'Erreur inconnue';
             }
         } catch (err: any) {
-            console.error("Erreur lors de la récupération des catégories :", err);
+            console.error("❌ Erreur lors de la récupération des catégories :", err);
             error.value = err.response?.data?.message || err.message || 'Erreur réseau';
         } finally {
-            isLoading.value = false;
+            loadingStates.value['all'] = false;
         }
     }
 
-    // Réinitialiser l'état
-    const resetCurrentCategory = () => {
-        currentCategory.value = null;
-        categoryProducts.value = [];
-        error.value = null;
+    // Réinitialiser l'état pour une catégorie spécifique
+    const resetCategory = (slug: string) => {
+        delete categoryProducts.value[slug];
+        delete loadingStates.value[slug];
+    }
+
+    // Récupérer un produit par son ID et sa catégorie
+    const getProductById = (categorySlug: string, productId: number | string): Product | undefined => {
+        const products = categoryProducts.value[categorySlug];
+        if (!products) return undefined;
+        return products.find(product => product.id === productId);
     }
 
     return {
         // State
         currentCategory,
         categories,
-        categoryProducts,
-        isLoading,
+        categoryProducts, // Garder pour compatibilité
+        loadingStates,
         error,
         
         // Computed
         totalCategories,
-        totalProductsInCategory,
+        getProductsBySlug,
+        isLoadingForSlug,
         
         // Actions
         fetchCategoryWithProducts,
         fetchAllCategories,
-        resetCurrentCategory
+        resetCategory,
+        getProductById
     };
 });
 

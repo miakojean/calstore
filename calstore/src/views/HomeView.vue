@@ -9,7 +9,7 @@
       :products="handBag"
       description="Découvrer nos nouveautés de sacs à mains"
     />
-    <categorysection title="Perruques" slug="	technologie"/>
+    <categorysection title="Perruques" slug="Perruques"/>
     <categorysection title="T-shirt" slug="t_shirt"/>
     <footerSection/>
     <cartmodal :isOpen="showCartModal" @close="showCartModal = false"/>

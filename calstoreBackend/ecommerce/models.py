@@ -128,14 +128,13 @@ class ProductVariant(models.Model):
     def __str__(self):
         return f"{self.product.name} - {self.name}: {self.value}"
 
-# SUPPRIMER la classe Customer existante et la remplacer par :
 class GuestCustomer(models.Model):
     """Client sans compte pour les commandes rapides"""
     email = models.EmailField()
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100, blank=True)
     phone = models.CharField(max_length=20)
-    
+    agree_terms = models.BooleanField(default=False)
     # Pour permettre la création de compte ultérieure
     user_account = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='guest_customer')
     
