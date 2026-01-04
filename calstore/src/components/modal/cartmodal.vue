@@ -42,27 +42,32 @@
 
           <!-- Panier avec articles -->
           <div v-else class="cart-items">
+            <!-- Debug: affiche le contenu brut du panier pour aider au debug -->
             <div class="items-list">
               <div 
                 v-for="item in cart" 
-                :key="item.id" 
+                :key="item.id || item.product?.id"
                 class="cart-item"
               >
-                <img :src="item.image || item.main_image_url || '/pic/placeholder-product.jpg'" :alt="item.name" class="item-image">
-                
+                <img
+                  :src="item.image || item.main_image_url || item.product?.main_image_url || (item.product && item.product.images && item.product.images[0] && item.product.images[0].image) || '/pic/placeholder-product.jpg'"
+                  :alt="item.product?.name || item.name"
+                  class="item-image"
+                >
+
                 <div class="item-details">
-                  <h4 class="item-name">{{ item.name }}</h4>
-                  <p class="item-price">{{ item.price }} FCFA</p>
-                  
+                  <h4 class="item-name">{{ item.product?.name || item.name }}</h4>
+                  <p class="item-price">{{ (item.price || item.unit_price || item.product?.price || 0) }} FCFA</p>
+
                   <div class="quantity-controls">
                     <button 
                       class="qty-btn" 
                       @click="decreaseQuantity(item.id)"
-                      :disabled="item.quantity <= 1"
+                      :disabled="(item.quantity || item.qty || (item.product && item.product.quantity) || 0) <= 1"
                     >
                       -
                     </button>
-                    <span class="quantity">{{ item.quantity }}</span>
+                    <span class="quantity">{{ item.quantity || item.qty || (item.product && item.product.quantity) || 0 }}</span>
                     <button 
                       class="qty-btn" 
                       @click="increaseQuantity(item.id)"
@@ -73,7 +78,7 @@
                 </div>
 
                 <div class="item-total">
-                  <span class="total-price">{{ (item.price * item.quantity).toFixed(2) }} FCFA</span>
+                  <span class="total-price">{{ ((item.price || item.unit_price || item.product?.price || 0) * (item.quantity || item.qty || 1)).toFixed(2) }} FCFA</span>
                   <button 
                     class="remove-btn"
                     @click="removeFromCart(item.id)"

@@ -105,12 +105,8 @@ export default {
     });
 
     const addToCart = (product: Product) => {
-      cartStore.addToCart({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.main_image_url || ''
-      })
+      // Call the store with productId to ensure API-backed add is used
+      cartStore.addToCart({ productId: product.id, quantity: 1 })
     }
 
     const showProductDetail = (product: Product) => {

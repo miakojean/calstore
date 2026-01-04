@@ -135,3 +135,44 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
+
+# IMPORTANT : Autoriser l'envoi de cookies
+CORS_ALLOW_CREDENTIALS = True
+
+# Headers autorisés
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+# Méthodes HTTP autorisées
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+# Configuration de la session
+SESSION_COOKIE_NAME = 'sessionid'
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = False  # True en production avec HTTPS
+SESSION_COOKIE_SAMESITE = 'Lax'  # Important pour les cookies cross-origin
+SESSION_COOKIE_AGE = 1209600  # 2 semaines
+
+# CSRF (si vous l'utilisez)
+CSRF_COOKIE_HTTPONLY = False  # Le front doit pouvoir lire ce cookie
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]

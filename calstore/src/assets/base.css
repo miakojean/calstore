@@ -3,6 +3,7 @@
 @import "tailwindcss";
 @plugin "daisyui";
 @import './style/container.css';
+@import './style/_form.css';
 
 :root {
 

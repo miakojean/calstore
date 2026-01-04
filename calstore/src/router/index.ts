@@ -22,6 +22,12 @@ const router = createRouter({
       // which is lazy-loaded when the route is visited.
       component: () => import('../views/AboutView.vue'),
     },
+    // === Routes for managing products and cart ===
+    {
+      path: '/cart-checkout',
+      name: 'cart-checkout',
+      component: () => import('../views/CartCheckoutView.vue'),
+    }
   ],
 })
 

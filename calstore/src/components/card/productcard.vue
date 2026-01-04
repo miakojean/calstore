@@ -33,9 +33,8 @@
                             {{ formatPrice(product.compare_price) }}
                         </span>
                     </div>
-                    <div class="details-button-container">
-                        <details-buton @click="showProductDetail"/>
-                    </div>
+                   
+                    <details-buton @click="showProductDetail"/>
                 </div>
                 <addtocartbutton @click="addToCart"/>
             </div>
