@@ -16,6 +16,7 @@ export interface CartItem {
 const useCartStore = defineStore('cart', () => {
     // ==================== STATE ====================
     const cart = ref<CartItem[]>([]);
+    const cartUnormaled = ref({});
     const isInitialized = ref(false);
     const isLoading = ref(false);
 
@@ -137,6 +138,9 @@ const useCartStore = defineStore('cart', () => {
             
             // Normaliser tous les items
             cart.value = (data.items || []).map(normalizeApiItem);
+
+            // Panier non normalisé complet
+            cartUnormaled.value = data;
             
             console.log('✅ Panier normalisé:', cart.value);
             
@@ -149,7 +153,7 @@ const useCartStore = defineStore('cart', () => {
             
             // Si le panier n'existe pas encore (404), c'est normal
             if (err.response?.status === 404 || err.response?.status === 400) {
-                console.log('ℹ️ Aucun panier existant, il sera créé au premier ajout');
+                console.log('Aucun panier existant, il sera créé au premier ajout');
                 cart.value = [];
                 isInitialized.value = true;
                 return cart.value;
@@ -183,7 +187,7 @@ const useCartStore = defineStore('cart', () => {
                 payload.variant_id = item.variantId || item.variant_id;
             }
 
-            console.log('➕ Ajout au panier:', payload);
+            console.log(' Ajout au panier:', payload);
 
             // Note: backend exposes the route at 'cart/add-item/'
             const response = await api.post('/ecommerce/cart/add-item/', payload);
@@ -384,11 +388,11 @@ const useCartStore = defineStore('cart', () => {
      */
     const initCart = async () => {
         if (isInitialized.value) {
-            console.log('ℹ️ Panier déjà initialisé');
+            console.log('Panier déjà initialisé');
             return;
         }
 
-        console.log('🚀 Initialisation du panier...');
+        console.log('Initialisation du panier...');
         
         try {
             await fetchCart();
@@ -412,6 +416,7 @@ const useCartStore = defineStore('cart', () => {
         cart,
         isInitialized,
         isLoading,
+        cartUnormaled,
         
         // Computed
         totalItems,

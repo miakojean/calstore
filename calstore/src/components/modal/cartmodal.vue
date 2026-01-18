@@ -1,19 +1,16 @@
 <template>
   <div>
-    <!-- Overlay -->
     <div 
       v-if="isOpen" 
       class="cart-modal-overlay" 
       @click="closeModal"
       :class="{ 'closing': isClosing }"
     >
-      <!-- Modale Panier -->
       <div 
         class="cart-modal-content" 
         @click.stop
         :class="{ 'closing': isClosing }"
       >
-        <!-- Header du panier -->
         <div class="cart-header">
           <div class="drag-handle"></div>
           <div class="cart-title">
@@ -23,14 +20,12 @@
                 </svg> 
                 Mon Panier
             </h2>
-            <span class="item-count">{{ totalItems }} article {{ totalItems > 1 ? 's' : '' }}</span>
+            <span class="item-count">{{ totalItems }} article{{ totalItems > 1 ? 's' : '' }}</span>
           </div>
           <button class="close-icon" @click="closeModal">x</button>
         </div>
 
-        <!-- Contenu du panier -->
         <div class="cart-body">
-          <!-- Panier vide -->
           <div v-if="isEmpty" class="empty-cart">
             <div class="empty-icon">🛒</div>
             <h3>Votre panier est vide</h3>
@@ -40,60 +35,59 @@
             </button>
           </div>
 
-          <!-- Panier avec articles -->
-          <div v-else class="cart-items">
-            <!-- Debug: affiche le contenu brut du panier pour aider au debug -->
-            <div class="items-list">
-              <div 
-                v-for="item in cart" 
-                :key="item.id || item.product?.id"
-                class="cart-item"
-              >
-                <img
-                  :src="item.image || item.main_image_url || item.product?.main_image_url || (item.product && item.product.images && item.product.images[0] && item.product.images[0].image) || '/pic/placeholder-product.jpg'"
-                  :alt="item.product?.name || item.name"
-                  class="item-image"
+          <template v-else>
+            <div class="cart-items">
+              <div class="items-list">
+                <div 
+                  v-for="item in cart" 
+                  :key="item.id"
+                  class="cart-item"
                 >
+                  <img
+                    :src="item.image || '/pic/placeholder-product.jpg'"
+                    :alt="item.name"
+                    class="item-image"
+                  >
 
-                <div class="item-details">
-                  <h4 class="item-name">{{ item.product?.name || item.name }}</h4>
-                  <p class="item-price">{{ (item.price || item.unit_price || item.product?.price || 0) }} FCFA</p>
+                  <div class="item-details">
+                    <h4 class="item-name">{{ item.name }}</h4>
+                    <p class="item-price">{{ item.price }} FCFA</p>
 
-                  <div class="quantity-controls">
+                    <div class="quantity-controls">
+                      <button 
+                        class="qty-btn" 
+                        @click="decreaseQuantity(item.id)"
+                        :disabled="item.quantity <= 1"
+                      >
+                        -
+                      </button>
+                      <span class="quantity">{{ item.quantity }}</span>
+                      <button 
+                        class="qty-btn" 
+                        @click="increaseQuantity(item.id)"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="item-total">
+                    <span class="total-price">{{ (item.price * item.quantity).toFixed(2) }} FCFA</span>
                     <button 
-                      class="qty-btn" 
-                      @click="decreaseQuantity(item.id)"
-                      :disabled="(item.quantity || item.qty || (item.product && item.product.quantity) || 0) <= 1"
+                      class="remove-btn"
+                      @click="removeFromCart(item.id)"
                     >
-                      -
-                    </button>
-                    <span class="quantity">{{ item.quantity || item.qty || (item.product && item.product.quantity) || 0 }}</span>
-                    <button 
-                      class="qty-btn" 
-                      @click="increaseQuantity(item.id)"
-                    >
-                      +
+                      🗑️
                     </button>
                   </div>
-                </div>
-
-                <div class="item-total">
-                  <span class="total-price">{{ ((item.price || item.unit_price || item.product?.price || 0) * (item.quantity || item.qty || 1)).toFixed(2) }} FCFA</span>
-                  <button 
-                    class="remove-btn"
-                    @click="removeFromCart(item.id)"
-                  >
-                    🗑️
-                  </button>
                 </div>
               </div>
             </div>
 
-            <!-- Résumé de commande -->
             <div class="order-summary">
-              <div class="summary-line total">
-                <span>Total</span>
-                <span class="final-price">{{ formattedTotalPrice }} FCFA</span>
+              <div class="summary-line">
+                <span>Sous-total</span>
+                <span>{{ formattedTotalPrice }} FCFA</span>
               </div>
               <div class="summary-line">
                 <span>Livraison</span>
@@ -101,30 +95,34 @@
               </div>
               <div class="summary-line total">
                 <span>Total</span>
-                <span class="final-price">{{ totalPrice }} FCFA</span>
+                <span class="final-price">{{ formattedTotalPrice }} FCFA</span>
               </div>
             </div>
-          </div>
+          </template>
         </div>
 
-        <!-- Footer avec CTA -->
         <div class="cart-footer" v-if="!isEmpty">
-          <button class="checkout-btn" @click="proceedToCheckout">
-            <span class="btn-text">Commander • {{ formattedTotalPrice }} FCFA</span>
-            <span class="btn-arrow">→</span>
-          </button>
+          <checkoutButton 
+            :label="`Commander • ${formattedTotalPrice} FCFA`" 
+            @handleClicked="proceedToCheckout"
+          />
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import { computed, ref } from 'vue'
-import { useCartStore } from '@/stores/cartStore'
+import { useCartStore } from '../../stores/cartStore'
+import checkoutButton from '../button/checkoutButton.vue';
+import { useRouter } from 'vue-router';
 
 export default {
   name: 'CartModal',
+  components:{
+    checkoutButton
+  },
   props: {
     isOpen: {
       type: Boolean,
@@ -135,6 +133,7 @@ export default {
   setup(props, { emit }) {
     const cartStore = useCartStore()
     const isClosing = ref(false)
+    const router = useRouter();
 
     const closeModal = () => {
       isClosing.value = true
@@ -148,8 +147,9 @@ export default {
 
     const step = ref(1) // Première étape du paiement
     const proceedToCheckout = () => {
-      console.log('Procéder au paiement')
+      console.log('Afficher les données du panier non normalisé:', cartStore.cartUnormaled);
       closeModal()
+      router.push('/cart-checkout');
     }
 
     // Formater le prix total pour l'affichage
@@ -158,12 +158,14 @@ export default {
     })
 
     return {
+      router,
       closeModal,
       proceedToCheckout,
-      cart: cartStore.cart,
-      totalItems: cartStore.totalItems,
       formattedTotalPrice,
-      isEmpty: cartStore.isEmpty,
+      cart: computed(() => cartStore.cart), // Utiliser un computed pour garantir la réactivité
+      totalItems: computed(() => cartStore.totalItems),
+      totalPrice: computed(() => cartStore.totalPrice),
+      isEmpty: computed(() => cartStore.isEmpty),
       isClosing,
       increaseQuantity: cartStore.increaseQuantity,
       decreaseQuantity: cartStore.decreaseQuantity,

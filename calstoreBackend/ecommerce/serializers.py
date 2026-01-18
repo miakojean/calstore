@@ -303,9 +303,13 @@ class CheckoutSerializer(serializers.Serializer):
     Sérialiseur pour gérer les données du checkout ou la validation de la commande.
     """
     cart_id = serializers.UUIDField()
-    shipping_address = serializers.CharField(max_length=500)
-    billing_address = serializers.CharField(max_length=500)
-    payment_method = serializers.ChoiceField(choices=['credit_card', 'paypal', 'stripe'])
+    shipping_address = serializers.CharField(required=False,max_length=500, allow_blank=True)
+    billing_address = serializers.CharField(required=False,max_length=500, allow_blank=True)
+    payment_method = serializers.ChoiceField(
+        choices=['credit_card', 'paypal', 'stripe', 'A la livraison'],
+        required=False,
+        default='A la livraison'
+    )
     email = serializers.EmailField()
     phone_number = serializers.CharField(max_length=20, required=False)
     special_instructions = serializers.CharField(max_length=1000, required=False, allow_blank=True)
@@ -334,4 +338,4 @@ class CheckoutSerializer(serializers.Serializer):
         except Cart.DoesNotExist:
             raise serializers.ValidationError("Invalid cart ID.")
         return value
-    # Vous pouvez ajouter d'autres validations personnalisées si nécessaire
+    # Vous pouvez ajouter d'autres validations personnalisées si nécessaire 
