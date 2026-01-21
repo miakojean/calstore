@@ -5,10 +5,10 @@
     </div>
 
     <div class="nav__links">
-      <a href="#">Accueil</a>
-      <a href="#">Catégories</a>
-      <a href="#">À propos</a>
-      <a href="#">Contact</a>
+      <RouterLink to="/">Accueil</RouterLink>
+      <RouterLink to="/categories">Catégories</RouterLink>
+      <RouterLink to="/about">À propos</RouterLink>
+      <RouterLink to="/contact">Contact</RouterLink>
     </div>
 
     <div class="btn__container">

@@ -290,7 +290,7 @@ class Order(models.Model):
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS, default='pending')
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS, default='card')
     
-    # Prix
+    # Prix 
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
     shipping_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     tax_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)

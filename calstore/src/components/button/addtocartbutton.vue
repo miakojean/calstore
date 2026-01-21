@@ -3,9 +3,7 @@
         class="add-to-cart-btn"
         @click="addToCart"
     >
-        <span class="btn-icon" v-if="isLoading===false">🛒</span>
-        <span v-if="isLoading===false">Ajouter au panier</span>
-
+        <span v-if="isLoading===false">Acheter</span>
         <span v-else class="loading loading-spinner loading-md"></span>
     </button>
 </template>
@@ -14,10 +12,16 @@
 import { ref } from 'vue';
 export default {
 
+    name:'addtocartbutton',
+
     props:{
         isLoading:{
             type: Boolean,
             default: false
+        },
+        label:{
+            type: String,
+            default:''
         }
     },
 
@@ -42,11 +46,11 @@ export default {
 <style scoped>
 
 .add-to-cart-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-color: #ed5959;
     color: white;
-    border: none;
-    padding: 0.6rem ;
-    border-radius: 0.8rem;
+    border: none; 
+    padding: 0.8rem ;
+    border-radius: 1.5rem;
     font-weight: 600;
     font-size: 1rem;
     cursor: pointer;
@@ -64,7 +68,7 @@ export default {
 
 .add-to-cart-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 12px #db8585;
 }
 
 .btn-icon {

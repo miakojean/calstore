@@ -294,7 +294,7 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = [
             'id', 'order_number', 'customer', 'status', 
-            'total_amount', 'created_at', 'updated_at', 'items'
+            'total_price', 'created_at', 'updated_at', 'items'
         ]
     
 # --- Serialiseur pour le checkout ---

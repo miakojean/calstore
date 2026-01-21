@@ -28,7 +28,6 @@
     <checkoutButton 
       label="Payer maintenant" 
       :isLoading="checkoutStore.isLoading" 
-      @handleClicked="makeCheckout" 
     />
   </form>
 </template>
@@ -43,7 +42,8 @@ export default {
     inputfamily,
     checkoutButton
   },
-  setup() {
+  emits: ['checkoutInitiated'],
+  setup(props, { emit }) {
     const checkoutStore = useCheckoutStore();
     const cartStore = useCartStore();
 
@@ -55,6 +55,8 @@ export default {
       
       // 3. Lancer la commande
       await checkoutStore.initiateCheckout();
+
+      emit('checkoutInitiated');
     };
 
     return { checkoutStore, cartStore, makeCheckout };

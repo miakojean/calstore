@@ -1,5 +1,5 @@
 <template>
-  <button @click="voir">
+  <button @click="voir" type="submit">
     <span class="label" v-if="isLoading === false">{{ label }}</span>
     <span
       v-if="isLoading === true"

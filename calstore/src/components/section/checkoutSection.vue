@@ -1,10 +1,14 @@
 <template>
     <section class="checkout-section">
-        <div class="checkout-form-container">
-            <checkoutForm />
+        <div class="checkout-form-container" v-if="!isSuccess">
+            <checkoutForm @checkout-initiated="handleCheckoutInitiated"/>
         </div>
-        <div class="cart-summary-container">
+        <div class="cart-summary-container" v-if="!isSuccess">
             <cartSection />
+        </div>
+
+        <div class="checkout-succes-section" v-if="isSuccess">
+            <successOrder />
         </div>
     </section>
 </template>
@@ -12,14 +16,30 @@
 <script lang="ts">
 import checkoutForm from '../forms/checkoutForm.vue';
 import cartSection from './cartSection.vue';
+import successOrder from '../card/successOrder.vue';
+import { ref } from 'vue';
 
 export default {
     name: "CheckoutSection",
     components: {
         checkoutForm,
-        cartSection
-    }
+        cartSection,
+        successOrder
+    },
+    setup() {
+        const isSuccess = ref<boolean>(false);
+
+        const handleCheckoutInitiated = (): void => {
+            isSuccess.value = true;
+        };
+
+        return {
+            isSuccess,
+            handleCheckoutInitiated
+        }
+    },
 }
+
 </script>
 
 <style scoped>
@@ -33,7 +53,8 @@ export default {
 }
 
 .checkout-form-container,
-.cart-summary-container {
+.cart-summary-container,
+.checkout-succes-section {
     flex: 1;
     min-width: 0; /* Important pour éviter l'overflow */
 }

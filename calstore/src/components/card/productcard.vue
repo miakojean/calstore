@@ -24,7 +24,7 @@
                 <p class="product-description">{{ product.short_description }}</p>
             </div>
 
-            <div class="product-footer">
+            <div class="product-footer flex flex-col gap-2">
                 <div class="price-section">
                     <div class="price-group">
                         <span class="current-price">{{ formatPrice(product.price) }}</span>
@@ -34,73 +34,87 @@
                         </span>
                     </div>
                    
-                    <details-buton @click="showProductDetail"/>
+                    <details-buton @click="addToCart"/>
                 </div>
-                <addtocartbutton @click="addToCart"/>
+                <addtocartbutton @click="proceedToCheckout" label="Ajouter au panier"/>
             </div>
         </div>
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import detailsButon from '../button/detailsButon.vue';
 import addtocartbutton from '../button/addtocartbutton.vue';
 import type { Product } from '../../stores/categoryStore';
+import { useRouter } from 'vue-router';
 
-export default {
-    props: {
-        product: {
-            type: Object as () => Product,
-            required: true,
-            default: () => ({
-                id: 1,
-                name: "Basket simple blanche",
-                price: 89.99,
-                images: [],
-                short_description: "Description courte",
-                description: "Description complète",
-                discount_percentage: 0,
-                compare_price: null
-            })
-        }
-    },
-    emits: ['add-to-cart', 'show-product-detail'],
-    components:{
-        detailsButon,
-        addtocartbutton
-    },
+const props = defineProps<{
+    product: Product;
+}>();
+
+const emit = defineEmits<{
+    'add-to-cart': [product: Product];
+    'show-product-detail': [product: Product];
+}>();
+
+const router = useRouter();
+
+// Méthodes
+const addToCart = () => {
+    emit('add-to-cart', props.product);
+};
+
+const showProductDetail = () => {
+    emit('show-product-detail', props.product);
+};
+
+const getStars = (rating: number) => {
+    const fullStars = '★'.repeat(Math.floor(rating));
+    const emptyStars = '☆'.repeat(5 - Math.floor(rating));
+    return fullStars + emptyStars;
+};
+
+// Formater le prix
+const formatPrice = (price: string | number): string => {
+    if (!price) return '0,00 €';
     
-    methods: {
-        addToCart() {
-            this.$emit('add-to-cart', this.product)
-        },
-        showProductDetail() {
-            this.$emit('show-product-detail', this.product)
-        },
-        getStars(rating: number) {
-            const fullStars = '★'.repeat(Math.floor(rating));
-            const emptyStars = '☆'.repeat(5 - Math.floor(rating));
-            return fullStars + emptyStars;
-        },
-        // Formater le prix
-        formatPrice(price: string | number): string {
-            if (!price) return '0,00 €';
-            
-            const numPrice = typeof price === 'string' ? parseFloat(price) : price;
-            
-            // Format français : 15 000,00 €
-            return numPrice.toLocaleString('fr-FR', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            }) + ' FCFA';
-        },
-        // Gérer les erreurs d'image
-        handleImageError(event: Event) {
-            const img = event.target as HTMLImageElement;
-            img.src = '/images/placeholder-product.jpg';
-        }
-    }
-}
+    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+    
+    // Format français : 15 000,00 €
+    return numPrice.toLocaleString('fr-FR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }) + ' FCFA';
+};
+
+// Gérer les erreurs d'image
+const handleImageError = (event: Event) => {
+    const img = event.target as HTMLImageElement;
+    img.src = '/images/placeholder-product.jpg';
+};
+
+const proceedToCheckout = () => {
+    addToCart();
+    router.push('/cart-checkout');
+};
+
+// Valeurs par défaut pour les props
+const defaultProduct: Product = {
+    id: 1,
+    name: "Basket simple blanche",
+    price: 89.99,
+    images: [],
+    short_description: "Description courte",
+    description: "Description complète",
+    discount_percentage: 0,
+    compare_price: null
+};
+
+// Appliquer les valeurs par défaut si nécessaire
+const productWithDefaults = {
+    ...defaultProduct,
+    ...props.product
+};
 </script>
 
 <style scoped>
@@ -265,29 +279,6 @@ export default {
     margin-top: 0.25rem;
 }
 
-.add-to-cart-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    padding: 0.75rem 1rem;
-    border-radius: 0.75rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    width: 100%;
-    font-size: 0.75rem;
-    margin-top: 0.5rem;
-}
-
-.add-to-cart-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-}
-
 .cart-icon {
     width: 1rem;
     height: 1rem;
@@ -336,11 +327,6 @@ export default {
         font-size: 1rem;
     }
     
-    .add-to-cart-btn {
-        padding: 1rem 1.25rem;
-        font-size: 0.875rem;
-        border-radius: 1rem;
-    }
     
     .quick-view-btn {
         padding: 0.75rem 1.5rem;
@@ -371,11 +357,6 @@ export default {
     
     .product-name {
         font-size: 1.25rem;
-    }
-    
-    .add-to-cart-btn {
-        padding: 1.25rem 1.5rem;
-        font-size: 1rem;
     }
     
     .cart-icon {
