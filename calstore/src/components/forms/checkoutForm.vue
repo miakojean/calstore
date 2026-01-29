@@ -3,28 +3,36 @@
     <inputfamily 
       label="Nom complet" 
       v-model="checkoutStore.checkoutData.fullName" 
-      name="fullName" 
-      placeholder="Entrez votre nom complet" 
+      :error="formatError(checkoutStore.error?.fullName)"
+      required
     />
+    
     <inputfamily 
       label="Numéro de téléphone" 
       v-model="checkoutStore.checkoutData.phone_number" 
-      name="phone" 
-      placeholder="Entrez votre numéro de téléphone" 
+      :error="formatError(checkoutStore.error?.phone_number)"
+      required
     />
+    
     <inputfamily 
       label="Adresse e-mail" 
       v-model="checkoutStore.checkoutData.email" 
-      name="email" 
-      placeholder="Entrez votre adresse e-mail" 
+      :error="formatError(checkoutStore.error?.email)"
       type="email"
+      required
     />
+
     <inputfamily 
       label="Adresse de livraison" 
       v-model="checkoutStore.checkoutData.shipping_address" 
-      name="shippingAddress" 
-      placeholder="Entrez votre adresse de livraison"
+      :error="formatError(checkoutStore.error?.shipping_address)"
+      required
     />
+
+    <div v-if="typeof checkoutStore.error === 'string'" class="error-field">
+      <p>{{ checkoutStore.error }}</p>
+    </div>
+
     <checkoutButton 
       label="Payer maintenant" 
       :isLoading="checkoutStore.isLoading" 
@@ -34,32 +42,32 @@
 
 <script lang="ts">
 import { useCheckoutStore } from '../../stores/checkoutStore';
-import { useCartStore } from '../../stores/cartStore'; // Importez aussi le cartStore
+import { useCartStore } from '../../stores/cartStore';
 import inputfamily from '../input/inputfamily.vue';
 import checkoutButton from '../button/checkoutButton.vue';
+
 export default {
-  components: {
-    inputfamily,
-    checkoutButton
-  },
+  components: { inputfamily, checkoutButton },
   emits: ['checkoutInitiated'],
   setup(props, { emit }) {
     const checkoutStore = useCheckoutStore();
-    const cartStore = useCartStore();
 
-    const makeCheckout = async () => {
-  
-      
-      // 2. Debug pour voir les données
-      console.log("Données envoyées :", checkoutStore.checkoutData);
-      
-      // 3. Lancer la commande
-      await checkoutStore.initiateCheckout();
-
-      emit('checkoutInitiated');
+    // Utilitaire pour transformer les tableaux d'erreurs Django en String
+    const formatError = (err: any) => {
+      if (Array.isArray(err)) return err[0]; // Prend le premier message
+      return err;
     };
 
-    return { checkoutStore, cartStore, makeCheckout };
+    const makeCheckout = async () => {
+      // initiateCheckout retourne désormais un booléen
+      const isSuccess = await checkoutStore.initiateCheckout();
+
+      if (isSuccess) {
+        emit('checkoutInitiated'); // N'est appelé que si l'API répond 200/201
+      }
+    };
+
+    return { checkoutStore, makeCheckout, formatError };
   }
 }
 </script>
@@ -70,5 +78,11 @@ form{
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.error-field{
+  padding: 1rem;
+  border-radius: 1rem;
+  color: red;
 }
 </style>
