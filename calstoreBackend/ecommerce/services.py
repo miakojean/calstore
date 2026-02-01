@@ -5,6 +5,8 @@ from .models import Order, OrderItem, Address, Product, ProductVariant
 from django.core.exceptions import ValidationError as DjangoValidationError
 from .models import Cart, CartItem
 
+from .utils import send_telegram_notification
+
 class CartService:
     @staticmethod
     def get_or_create_cart(request):

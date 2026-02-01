@@ -1,15 +1,13 @@
-from django.shortcuts import render
 from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
-
+import logging
 # IMPORTANT : Ajout du modèle Product et du ProductSerializer
 from .models import Category, Cart, CartItem
 from .serializers import CheckoutSerializer, OrderSerializer
 from rest_framework.permissions import AllowAny
-from django.db import transaction
 from rest_framework.status import HTTP_400_BAD_REQUEST 
 from .serializers import (
     CategorySerializer, ProductSerializer, 
@@ -18,6 +16,10 @@ from .serializers import (
     CartSerializer, OrderSerializer, CheckoutSerializer
 ) 
 from .services import (OrderService, CartService)
+
+from .utils import send_order_telegram_notifications
+
+logger = logging.getLogger(__name__)
 
 def index(request):
     return HttpResponse('Bienvenu au pays mon fils')
@@ -35,7 +37,7 @@ class CategoryListAPIView(APIView):
             categories = Category.objects.filter(is_active=True).order_by('name')
             
             # Sérialiser les données
-            serializer = CategoryWithProductsSerializer(categories, many=True, context={'request': request})
+            serializer = CategorySerializer(categories, many=True, context={'request': request})
             
             # Retourner la réponse
             return Response({
@@ -290,28 +292,88 @@ class CartItemAPIView(APIView):
 
 class CheckoutAPIView(APIView):
     def post(self, request):
-        # Initialisation du serializer avec les données JSON
         serializer = CheckoutSerializer(data=request.data)
         
-        if serializer.is_valid():
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            cart_id = serializer.validated_data['cart_id']
+            cart = Cart.objects.get(id=cart_id)
+            
+            order = OrderService.finalize_checkout(
+                cart=cart, 
+                validated_data=serializer.validated_data
+            )
+            
+            # Sérialisation de la commande
+            order_serializer = OrderSerializer(order)
+            order_data = order_serializer.data
+            
+            # Préparation des données pour la notification
+            notification_data = self._prepare_notification_data(order, order_data)
+            
+            # Envoi de la notification (optionnel, peut échouer sans bloquer)
             try:
-                # Récupération du panier validé par le serializer
-                cart_id = serializer.validated_data['cart_id']
-                cart = Cart.objects.get(id=cart_id)
-
-                # Appel au service pour la logique métier
-                order = OrderService.finalize_checkout(
-                    cart=cart, 
-                    validated_data=serializer.validated_data
-                )
-
-                # Réponse avec le détail de la commande créée
-                response_serializer = OrderSerializer(order)
-                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-
-            except Cart.DoesNotExist:
-                return Response({"error": "Panier introuvable"}, status=status.HTTP_404_NOT_FOUND)
+                send_order_telegram_notifications(**notification_data)
             except Exception as e:
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                # Log l'erreur mais ne fais pas échouer la commande
+                logger.error(f"Notification Telegram échouée pour la commande {order.id}: {e}")
+            
+            return Response(order_data, status=status.HTTP_201_CREATED)
+            
+        except Cart.DoesNotExist:
+            return Response({"error": "Panier introuvable"}, status=status.HTTP_404_NOT_FOUND)
+        except ValidationError as e:
+            return Response({"error": e.detail if hasattr(e, 'detail') else str(e)}, 
+                          status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.exception(f"Erreur lors du checkout: {e}")
+            return Response({"error": "Erreur interne du serveur"}, 
+                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def _prepare_notification_data(self, order, order_data):
+        """Prépare les données pour la notification Telegram"""
+        # Récupération du nom du client
+        customer_name = self._extract_customer_name(order, order_data)
+        
+        # Récupération des articles
+        items = self._extract_items(order_data)
+        
+        return {
+            'id': order.id,
+            'order_number': order_data.get('order_number', f"CMD-{order.id}"),
+            'customer': customer_name,
+            'items': items,
+            'total_price': order_data.get('total_price', 0)
+        }
+    
+    def _extract_customer_name(self, order, order_data):
+        """Extrait le nom du client depuis l'order ou les données sérialisées"""
+        # Essayer depuis l'order d'abord
+        if order.customer:
+            return order.customer.get_full_name()
+        elif order.guest_email:
+            return f"Client ({order.guest_email})"
+        
+        # Fallback sur les données sérialisées
+        customer_data = order_data.get('customer')
+        if isinstance(customer_data, dict):
+            return customer_data.get('name', 'Client')
+        
+        return order_data.get('customer_name', 'Client')
+    
+    def _extract_items(self, order_data):
+        """Extrait la liste des articles formatés"""
+        items = order_data.get('items', [])
+        if not items:
+            return []
+        
+        # Format minimal pour Telegram
+        return [
+            {
+                'name': item.get('product_name', item.get('name', 'Produit'))[:50],
+                'quantity': item.get('quantity', 1)
+            }
+            for item in items[:10]  # Limite à 10 articles max
+        ]

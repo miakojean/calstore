@@ -6,7 +6,76 @@
 
     <div class="nav__links">
       <RouterLink to="/">Accueil</RouterLink>
-      <RouterLink to="/categories">Catégories</RouterLink>
+      
+      <div 
+        class="categories-container"
+        @mouseenter="handleMouseEnter"
+        @mouseleave="handleMouseLeave"
+      >
+        <RouterLink 
+          to="/categories" 
+          class="categories-link"
+          @click.prevent="handleCategoriesClick"
+        >
+          Catégories
+          <span class="dropdown-arrow">▼</span>
+        </RouterLink>
+        
+        <transition name="dropdown">
+          <div 
+            v-if="showDropdown" 
+            class="dropdown-menu"
+            @mouseenter="handleMouseEnter"
+            @mouseleave="handleMouseLeave"
+          >
+            <div class="dropdown-content">
+              
+              <div v-if="isLoading" class="dropdown-item">
+                <span class="dropdown-link" style="color: #888; cursor: default;">
+                  Chargement...
+                </span>
+              </div>
+
+              <div v-else-if="categories.length === 0 && !error" class="dropdown-item">
+                <span class="dropdown-link" style="cursor: default;">
+                  Aucune catégorie
+                </span>
+              </div>
+
+              <div 
+                v-else
+                v-for="category in categories" 
+                :key="category.id"
+                class="dropdown-item"
+              >
+                <RouterLink 
+                  :to="`/categories/${category.slug}`"
+                  class="dropdown-link"
+                  @click="closeDropdown"
+                >
+                  {{ category.name }}
+                </RouterLink>
+                
+                <div 
+                  v-if="category.subcategories && category.subcategories.length"
+                  class="subcategories"
+                >
+                  <RouterLink
+                    v-for="sub in category.subcategories"
+                    :key="sub.id"
+                    :to="{name:category, params:sub.name}"
+                    class="subcategory-link"
+                    @click="closeDropdown"
+                  >
+                    {{ sub.name }}
+                  </RouterLink>
+                </div>
+              </div>
+            </div>
+          </div>
+        </transition>
+      </div>
+      
       <RouterLink to="/about">À propos</RouterLink>
       <RouterLink to="/contact">Contact</RouterLink>
     </div>
@@ -18,61 +87,158 @@
 </template>
 
 <script lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+import { RouterLink } from 'vue-router'
+// MODIFICATION: Import correct basé sur votre fichier categoryStore.ts
+import { useCategoryStore } from '../../stores/categoryStore' 
 import cartButton from '../button/cartButton.vue'
 import { useCartStore } from '../../stores/cartStore'
 
-// Définir les emits avec TypeScript
+// Interfaces locales (peuvent être importées du store si besoin)
+interface Subcategory {
+  id: number | string
+  name: string
+  slug: string
+  category_id: number | string
+}
+
+interface Category {
+  id: number | string
+  name: string
+  slug: string
+  subcategories?: Subcategory[]
+}
+
 interface Emits {
   (e: 'opencart'): void
 }
 
 export default {
-  name: 'navbar',
+  name: 'Navbar',
   components: {
     cartButton,
+    RouterLink
   },
   emits: {
     opencart: null
   },
   setup(props, { emit }: { emit: Emits }) {
-
     const store = useCartStore()
+    // MODIFICATION: Utilisation du bon store
+    const categoryStore = useCategoryStore()
+    
+    // État du dropdown
+    const showDropdown = ref<boolean>(false)
+    const dropdownTimeout = ref<NodeJS.Timeout | null>(null)
 
+    // Récupérer les catégories depuis le store
+    const categories = computed(() => {
+      // Cast en any si les types ne matchent pas parfaitement entre le store et le composant
+      return (categoryStore.categories || []) as any[]
+    })
+
+    // Computed pour le loading state
+    const isLoading = computed(() => {
+      return categoryStore.loadingStates && categoryStore.loadingStates['all']
+    })
+
+    const error = computed(() => categoryStore.error)
+
+    // Méthodes
     const showCartModal = (): void => {
-      emit("opencart");
+      emit("opencart")
     }
 
-    // Reactive data avec typage
-    const isScrolled = ref<boolean>(false)
+    // MODIFICATION : Nouvelle logique pour le survol
+    const handleMouseEnter = (): void => {
+      // Annuler la fermeture si elle était prévue (debounce)
+      if (dropdownTimeout.value) {
+        clearTimeout(dropdownTimeout.value)
+        dropdownTimeout.value = null
+      }
+      
+      showDropdown.value = true
 
-    // Methods avec typage
+      // LAZY LOADING : Fetch seulement si vide et pas en cours de chargement
+      if (categoryStore.categories.length === 0 && !isLoading.value) {
+        // Utilisation de la méthode fetchAllCategories définie dans categoryStore.ts
+        categoryStore.fetchAllCategories()
+      }
+    }
+
+    const handleMouseLeave = (): void => {
+      // Délai pour éviter la fermeture trop rapide (meilleure UX)
+      dropdownTimeout.value = setTimeout(() => {
+        showDropdown.value = false
+      }, 300)
+    }
+
+    const handleCategoriesClick = (): void => {
+      if (window.innerWidth < 768) {
+        // Sur mobile, le click toggle le menu et lance le fetch si besoin
+        if (!showDropdown.value) {
+           handleMouseEnter()
+        } else {
+           showDropdown.value = false
+        }
+      }
+    }
+
+    const closeDropdown = (): void => {
+      showDropdown.value = false
+      if (dropdownTimeout.value) {
+        clearTimeout(dropdownTimeout.value)
+      }
+    }
+
+    const cancelMouseLeave = (): void => {
+      if (dropdownTimeout.value) {
+        clearTimeout(dropdownTimeout.value)
+      }
+    }
+
+    // Scroll
+    const isScrolled = ref<boolean>(false)
     const handleScroll = (): void => {
       isScrolled.value = window.scrollY > 10
     }
 
     // Lifecycle
     onMounted((): void => {
-      window.addEventListener('scroll', handleScroll);
-      console.log(store.cart)
+      window.addEventListener('scroll', handleScroll)
+      
+      // SUPPRESSION : On ne charge plus automatiquement au montage
+      // if (categoryStore.categories.length === 0) { ... }
     })
 
     onBeforeUnmount((): void => {
       window.removeEventListener('scroll', handleScroll)
+      if (dropdownTimeout.value) {
+        clearTimeout(dropdownTimeout.value)
+      }
     })
 
-    // Return
     return {
       isScrolled,
       store,
-      showCartModal
+      categoryStore, // Retourné pour accès template si besoin
+      showCartModal,
+      showDropdown,
+      categories,
+      isLoading,
+      error,
+      handleCategoriesClick,
+      closeDropdown,
+      handleMouseEnter, // Nouvelle méthode retournée
+      handleMouseLeave,
+      cancelMouseLeave
     }
   }
 }
 </script>
 
 <style scoped>
-.navbar{
+.navbar {
   width: 100%;
   display: flex;
   align-items: center;
@@ -90,24 +256,154 @@ export default {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.logo h3{
+.logo h3 {
   font-size: 1.5rem;
   font-weight: 500;
   margin: 0;
 }
 
-.nav__links{
+.nav__links {
   display: flex;
   gap: 2rem;
   justify-content: space-between;
   align-items: center;
   font-size: 0.9rem;
+  position: relative;
 }
 
-.btn__container{
-  display:flex;
+/* Container des catégories */
+.categories-container {
+  position: relative;
+  display: inline-block;
+  height: 100%; /* Assure que le hover ne se perd pas entre le lien et le menu */
+}
+
+.categories-link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  padding: 8px 0;
+}
+
+.dropdown-arrow {
+  font-size: 0.7rem;
+  transition: transform 0.3s ease;
+}
+
+.categories-container:hover .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 220px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  margin-top: 8px;
+  z-index: 1001;
+  overflow: hidden;
+  animation: slideDown 0.2s ease;
+}
+
+.dropdown-content {
+  padding: 12px 0;
+  max-height: 70vh; /* Sécurité pour ne pas dépasser l'écran */
+  overflow-y: auto;
+}
+
+.dropdown-item {
+  position: relative;
+}
+
+.dropdown-link {
+  display: block;
+  padding: 10px 20px;
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.dropdown-link:hover {
+  background-color: #f5f5f5;
+}
+
+/* Sous-catégories */
+.subcategories {
+  padding-left: 20px;
+  border-left: 2px solid #eee;
+  margin-left: 20px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+.subcategory-link {
+  display: block;
+  padding: 8px 20px;
+  text-decoration: none;
+  color: #666;
+  font-size: 0.9em;
+  transition: color 0.2s ease;
+}
+
+.subcategory-link:hover {
+  color: #007bff;
+  background-color: transparent;
+}
+
+/* Animation */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.3s ease;
+  transform-origin: top center;
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: scaleY(0.8);
+}
+
+.btn__container {
+  display: flex;
   align-items: center;
   justify-content: space-around;
   gap: 0.5rem;
+}
+
+/* Animation personnalisée */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .categories-container {
+    position: static;
+  }
+  
+  .dropdown-menu {
+    position: fixed;
+    top: 70px;
+    left: 0;
+    right: 0;
+    min-width: auto;
+    border-radius: 0;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
 }
 </style>

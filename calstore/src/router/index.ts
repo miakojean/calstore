@@ -15,6 +15,11 @@ const router = createRouter({
       component: () => import('../views/DiscountView.vue'),
     },
     {
+      path:'/categories/:slug',
+      name:'category',
+      component: () => import('../views/CategoryView.vue')
+    },
+    {
       path: '/about',
       name: 'about',
       // route level code-splitting

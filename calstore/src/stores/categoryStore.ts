@@ -75,13 +75,13 @@ const useCategoryStore = defineStore('category', () => {
                 // Stocker les produits par catégorie
                 categoryProducts.value[categorySlug] = response.data.products || [];
                 
-                console.log(`✅ Produits récupérés pour ${categorySlug}:`, categoryProducts.value[categorySlug]);
+                console.log(`Produits récupérés pour ${categorySlug}:`, categoryProducts.value[categorySlug]);
             } else {
                 error.value = response.data?.message || 'Erreur inconnue';
-                console.error(`❌ Erreur API pour ${categorySlug}:`, response.data);
+                console.error(`Erreur API pour ${categorySlug}:`, response.data);
             }
         } catch (err: any) {
-            console.error(`❌ Erreur pour ${categorySlug}:`, err);
+            console.error(`Erreur pour ${categorySlug}:`, err);
             error.value = err.response?.data?.message || err.message || 'Erreur réseau';
         } finally {
             loadingStates.value[categorySlug] = false;
@@ -98,12 +98,12 @@ const useCategoryStore = defineStore('category', () => {
             
             if (response.data && response.data.status === 'success') {
                 categories.value = response.data.data || [];
-                console.log("✅ Toutes les catégories récupérées :", categories.value);
+                console.log("Toutes les catégories récupérées :", categories.value);
             } else {
                 error.value = response.data?.message || 'Erreur inconnue';
             }
         } catch (err: any) {
-            console.error("❌ Erreur lors de la récupération des catégories :", err);
+            console.error("Erreur lors de la récupération des catégories :", err);
             error.value = err.response?.data?.message || err.message || 'Erreur réseau';
         } finally {
             loadingStates.value['all'] = false;
