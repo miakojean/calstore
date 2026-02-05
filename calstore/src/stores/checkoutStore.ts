@@ -18,16 +18,11 @@ export interface Checkout {
 
 const useCheckoutStore = defineStore('checkout', () => {
     const isLoading = ref<boolean>(false);
-    const error = ref<string | null>(null);
+    // On change le type pour accepter un objet d'erreurs venant de Django
+    const error = ref<any>(null); 
 
     const cartStore = useCartStore();
-    
-    // Initialisez checkoutData avec des valeurs par défaut
-
-    const currentCartId = computed(() => {
-        // Supposons que cartStore a une propriété cartId
-        return (cartStore.cartUnormaled as any).id || null;
-    });
+    const currentCartId = computed(() => (cartStore.cartUnormaled as any).id || null);
 
     const checkoutData = ref<Checkout>({
         cart_id: currentCartId.value,
@@ -35,22 +30,41 @@ const useCheckoutStore = defineStore('checkout', () => {
         billing_address: '',
         fullName: '',
         phone_number: '',
-        email: '', // À dynamiser plus tard
+        email: '',
         payment_method: 'A la livraison',
         agree_terms: true
-    });
+    }); 
 
+    // checkoutStore.ts
     const initiateCheckout = async () => {
+        error.value = null; // Reset les erreurs précédentes
+
+        // --- VALIDATION LOCALE (Tuer l'envoi dans l'œuf) ---
+        const localErrors: any = {};
+
+        if (!checkoutData.value.fullName?.trim()) localErrors.fullName = "Le nom est obligatoire.";
+        if (!checkoutData.value.email?.trim()) localErrors.email = "L'email est obligatoire.";
+        if (!checkoutData.value.phone_number?.trim()) localErrors.phone_number = "Le téléphone est obligatoire.";
+        if (!checkoutData.value.shipping_address?.trim()) localErrors.shipping_address = "L'adresse de livraison est requise.";
+
+        // Si on a des erreurs locales, on arrête TOUT ici
+        if (Object.keys(localErrors).length > 0) {
+            error.value = localErrors;
+            return false; // La requête ne sera jamais lancée
+        }
+
+        // --- ENVOI REQUÊTE (Si valide) ---
         isLoading.value = true;
-        checkoutData.value.cart_id = currentCartId.value; // On injecte l'ID du panier avant l'envoi
+        checkoutData.value.cart_id = currentCartId.value;
 
         try {
-            // Note: Vérifiez l'URL, votre Serializer Django attend cart_id, email, shipping_address, etc.
-            const response = await api.post('ecommerce/checkout/', checkoutData.value);
-            console.log('Réponse du serveur:', response.data);
+            await api.post('ecommerce/checkout/', checkoutData.value);
+            await cartStore.clearCart();
+            return true; 
         } catch (err: any) {
-            error.value = err.response?.data || 'Erreur serveur';
-            console.error('Détails erreur:', error.value);
+            // Erreurs venant de Django (ex: email déjà utilisé, stock épuisé)
+            error.value = err.response?.data || "Une erreur serveur est survenue";
+            return false; 
         } finally {
             isLoading.value = false;
         }
