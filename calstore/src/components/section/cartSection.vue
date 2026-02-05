@@ -1,8 +1,8 @@
 <template>
-  <div class="cart-section">
+  <div class="cart-section flex flex-col gap-6">
     <!-- Liste des articles -->
-     <h3>Mon Panier</h3>
-    <div class="items-list">
+    <h3>Mon Panier</h3>
+    <div class="items-list" v-if="!cartStore.isLoading" >
       <div 
         v-for="item in cartStore.cart" 
         :key="item.id"
@@ -73,12 +73,20 @@
         <span>Total</span>
         <span class="final-price">{{ formatPrice(cartStore.totalPrice) }} FCFA</span>
       </div>
+
+    </div>
+
+    <!-- Skeleton de chargement -->
+    <div v-if="cartStore.isLoading" class="w-full">
+      <cartSkeleton />
     </div>
   </div>
 </template>
 
 <script setup>
 import { useCartStore } from '@/stores/cartStore';
+import cartSkeleton from './cartSkeleton.vue';
+
 
 const cartStore = useCartStore();
 

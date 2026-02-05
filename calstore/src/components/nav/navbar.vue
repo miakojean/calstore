@@ -12,6 +12,7 @@
     </div>
 
     <div class="btn__container">
+      <researchinput/>
       <cartButton @click="showCartModal"/>
     </div>
   </nav>
@@ -21,6 +22,7 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import cartButton from '../button/cartButton.vue'
 import { useCartStore } from '../../stores/cartStore'
+import researchinput from '../input/researchinput.vue'
 
 // Définir les emits avec TypeScript
 interface Emits {
@@ -31,6 +33,7 @@ export default {
   name: 'navbar',
   components: {
     cartButton,
+    researchinput
   },
   emits: {
     opencart: null
