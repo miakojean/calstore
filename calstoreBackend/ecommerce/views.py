@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError
 import logging
 # IMPORTANT : Ajout du modèle Product et du ProductSerializer
-from .models import Category, Cart, CartItem
+from .models import Category, Cart, CartItem, Product
 from .serializers import CheckoutSerializer, OrderSerializer
 from rest_framework.permissions import AllowAny
 from rest_framework.status import HTTP_400_BAD_REQUEST 
@@ -25,6 +25,53 @@ def index(request):
     return HttpResponse('Bienvenu au pays mon fils')
 
 # --- Vues existantes (inchangées) ---
+
+class QueryProductAPI(APIView):
+
+    def get(self, request):
+        try:
+            # 1. Commencer par récupérer TOUS les produits (sans tri initial)
+            queryset = Product.objects.all()
+            
+            # 2. Récupérer le paramètre 'name' de la requête GET
+            search_name = request.GET.get('name')
+            
+            # 3. Appliquer le filtre UNIQUEMENT si le paramètre est fourni
+            if search_name:
+                # Filtrer les produits dont le nom contient la chaîne recherchée
+                # __icontains = recherche insensible à la casse (maj/min)
+                queryset = queryset.filter(name__icontains=search_name)
+                message = f'Produits filtrés par "{search_name}" avec succès'
+            else:
+                message = 'Tous les produits récupérés avec succès'
+            
+            # 4. Trier les résultats APRÈS filtrage (meilleure performance)
+            queryset = queryset.order_by('name')
+            
+            # 5. Compter les résultats pour information
+            count = queryset.count()
+            
+            # 6. Sérialiser les données
+            serializer = ProductSerializer(queryset, many=True)
+            
+            # 7. Retourner la réponse avec des informations claires
+            return Response(
+                {
+                    'status': 'success',
+                    'message': message,
+                    'count': count,  # Nombre de résultats
+                    'data': serializer.data
+                }, 
+                status=status.HTTP_200_OK
+            )
+        
+        except Exception as e:
+            # Message d'erreur plus précis
+            return Response({
+                'status': 'error',
+                'message': 'erreur lors de la réccupération des produits',
+                'search_parameter': request.GET.get('name', 'aucun')  # Utile pour débogage
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 class CategoryListAPIView(APIView):
     """

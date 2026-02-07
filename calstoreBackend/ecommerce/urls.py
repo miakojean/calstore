@@ -6,7 +6,8 @@ from .views import (
     CheckoutAPIView,
     CartAPIView,
     AddToCartAPIView,
-    CartItemAPIView
+    CartItemAPIView,
+    QueryProductAPI
 )
 
 urlpatterns = [
@@ -17,6 +18,9 @@ urlpatterns = [
     
     # Ajoutez aussi cette URL si vous voulez utiliser CategoryProductsAPIView
     path('category-products/<slug:slug>', view=CategoryProductsAPIView.as_view(), name="category-products"),
+
+    # Product query
+    path('products-query/', view=QueryProductAPI.as_view(), name='product-query'),
 
     # About Cart
     path('cart/', view=CartAPIView.as_view(), name="cart"),

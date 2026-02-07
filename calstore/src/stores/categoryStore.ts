@@ -37,6 +37,9 @@ export interface Product {
 }
 
 const useCategoryStore = defineStore('category', () => {
+
+    // cache pour éviter de tout le temps faire des appels api
+const cache = ref<object>({});
     
     // State - Données des catégories
     const currentCategory = ref<Category | null>(null);

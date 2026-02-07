@@ -14,8 +14,6 @@ djangorestframework-simplejwt # Pour l'authentification
 # Media
 Pillow  # Essentiel pour le traitement d'images
 
-# Data analysis (si nécessaire)
-
 # Production
 gunicorn  # Serveur WSGI recommandé
 whitenoise # Excellent pour servir les fichiers statiques
