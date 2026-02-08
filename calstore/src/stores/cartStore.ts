@@ -180,7 +180,7 @@ const useCartStore = defineStore('cart', () => {
 
             const payload: any = {
                 product_id: productId,
-                quantity: item.quantity || 1
+                quantity: 1
             };
 
             if (item.variantId || item.variant_id) {

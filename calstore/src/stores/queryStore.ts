@@ -1,53 +1,55 @@
+// queryStore.ts
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref } from "vue";
 import api from "@/_services/api";
 
-const useQueryStore = defineStore('product-query', ()=>{
-
+const useQueryStore = defineStore('product-query', () => {
     // state
     const isLoading = ref<boolean>(false);
-    const error = ref<string>('')
-    const results = ref([]);
+    const error = ref<string>('');
+    const results = ref<any[]>([]);
 
     // actions
-    const makeProductQuery = async (q:string) => {
 
-        isLoading.value = true,
-        error.value = ''
-
-        try {
-            const response = await api.get(`ecommerce/products-query/?name=${q}`);
-            
-            if (response.data){
-                results.value = response.data;
-                isLoading.value = false;
-
-                // debogage
-                console.log('articles récupérés', results.value);
-
-            } else {
-                error.value = response.data?.message || 'Erreur inconnue';
-                isLoading.value = false;
-                console.error(`Erreur lors de la recup`);
-            }
-        }   catch(err:any){
-            console.error(err);
-            isLoading.value = false;
+    const makeProductQuery = async (q: string) => {
+        if (!q.trim()) {
+            results.value = [];
+            return;
         }
 
-    }
+        isLoading.value = true;
+        error.value = '';
 
-    return{
+        try {
+            const response = await api.get(`ecommerce/products-query/`, {
+                params: { name: q.trim() }
+            });
+            
+            if (response.status === 200) {
+                results.value = response.data.data || [];
+                console.log('Articles récupérés:', results.value);
+            } else {
+                error.value = 'Erreur lors de la récupération des données';
+                console.error('Erreur API:', response.status);
+            }
+        } catch (err: any) {
+            error.value = err.response?.data?.message || 'Erreur réseau';
+            console.error('Erreur:', err);
+            results.value = [];
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
+    return {
         // state
         isLoading,
         error,
         results,
-
+        
         // actions
         makeProductQuery
-    }
+    };
+});
 
-
-})
-
-export {useQueryStore}
+export { useQueryStore };

@@ -36,38 +36,37 @@ export interface Product {
     brand?: any;
 }
 
-const useCategoryStore = defineStore('category', () => {
+export const useCategoryStore = defineStore('category', () => {
 
-    // cache pour éviter de tout le temps faire des appels api
-const cache = ref<object>({});
-    
-    // State - Données des catégories
-    const currentCategory = ref<Category | null>(null);
+    // --- CONFIGURATION DU CACHE ---
+    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes en millisecondes
+    const lastFetched = ref<Record<string, number>>({});
+
+    // --- STATE ---
     const categories = ref<Category[]>([]);
-    
-    // CHANGEZ CECI : stocker les produits par catégorie
-    const categoryProducts = ref<Record<string, Product[]>>({}); // { 'chaussures': [...], 'sac_a_mains': [...] }
-    
-    // CHANGEZ CECI : stocker le loading par catégorie
+    const categoryProducts = ref<Record<string, Product[]>>({});
     const loadingStates = ref<Record<string, boolean>>({});
-    
     const error = ref<string | null>(null);
 
-    // Computed
-    const totalCategories = computed(() => categories.value.length);
-    
-    // Nouveau computed pour récupérer les produits d'une catégorie spécifique
-    const getProductsBySlug = (slug: string) => {
-        return computed(() => categoryProducts.value[slug] || []);
-    };
-    
-    const isLoadingForSlug = (slug: string) => {
-        return computed(() => loadingStates.value[slug] || false);
+    // --- UTILS ---
+    const isCacheValid = (key: string) => {
+        const lastUpdate = lastFetched.value[key];
+        if (!lastUpdate) return false;
+        return (Date.now() - lastUpdate) < CACHE_DURATION;
     };
 
-    // Actions
-    const fetchCategoryWithProducts = async (categorySlug: string) => {
-        // Réinitialiser le loading pour cette catégorie
+    // --- ACTIONS ---
+
+    /**
+     * Récupère les produits d'une catégorie avec gestion du cache
+     */
+    const fetchCategoryWithProducts = async (categorySlug: string, force = false) => {
+        // Si le cache est valide et qu'on ne force pas, on arrête ici
+        if (!force && isCacheValid(`products_${categorySlug}`) && categoryProducts.value[categorySlug]) {
+            console.log(`[Cache] Utilisation des données locales pour : ${categorySlug}`);
+            return;
+        }
+
         loadingStates.value[categorySlug] = true;
         error.value = null;
         
@@ -75,76 +74,60 @@ const cache = ref<object>({});
             const response = await api.get(`/ecommerce/category-products/${categorySlug}`);
             
             if (response.data && response.data.status === 'success') {
-                // Stocker les produits par catégorie
                 categoryProducts.value[categorySlug] = response.data.products || [];
-                
-                console.log(`Produits récupérés pour ${categorySlug}:`, categoryProducts.value[categorySlug]);
+                // Mise à jour du timestamp du cache
+                lastFetched.value[`products_${categorySlug}`] = Date.now();
             } else {
                 error.value = response.data?.message || 'Erreur inconnue';
-                console.error(`Erreur API pour ${categorySlug}:`, response.data);
             }
         } catch (err: any) {
-            console.error(`Erreur pour ${categorySlug}:`, err);
             error.value = err.response?.data?.message || err.message || 'Erreur réseau';
         } finally {
             loadingStates.value[categorySlug] = false;
         }
     }
 
-    const fetchAllCategories = async () => {
-        // Garder un loading global pour toutes les catégories
+    /**
+     * Récupère la liste de toutes les catégories avec gestion du cache
+     */
+    const fetchAllCategories = async (force = false) => {
+        if (!force && isCacheValid('all_categories') && categories.value.length > 0) {
+            console.log("[Cache] Liste des catégories déjà à jour");
+            return;
+        }
+
         loadingStates.value['all'] = true;
-        error.value = null;
         
         try {
             const response = await api.get('/ecommerce/category-list');
-            
             if (response.data && response.data.status === 'success') {
                 categories.value = response.data.data || [];
-                console.log("Toutes les catégories récupérées :", categories.value);
-            } else {
-                error.value = response.data?.message || 'Erreur inconnue';
+                lastFetched.value['all_categories'] = Date.now();
             }
         } catch (err: any) {
-            console.error("Erreur lors de la récupération des catégories :", err);
-            error.value = err.response?.data?.message || err.message || 'Erreur réseau';
+            error.value = "Erreur lors de la récupération des catégories";
         } finally {
             loadingStates.value['all'] = false;
         }
     }
 
-    // Réinitialiser l'état pour une catégorie spécifique
     const resetCategory = (slug: string) => {
         delete categoryProducts.value[slug];
         delete loadingStates.value[slug];
-    }
-
-    // Récupérer un produit par son ID et sa catégorie
-    const getProductById = (categorySlug: string, productId: number | string): Product | undefined => {
-        const products = categoryProducts.value[categorySlug];
-        if (!products) return undefined;
-        return products.find(product => product.id === productId);
+        delete lastFetched.value[`products_${slug}`];
     }
 
     return {
-        // State
-        currentCategory,
         categories,
-        categoryProducts, // Garder pour compatibilité
+        categoryProducts,
         loadingStates,
         error,
-        
-        // Computed
-        totalCategories,
-        getProductsBySlug,
-        isLoadingForSlug,
-        
-        // Actions
-        fetchCategoryWithProducts,
         fetchAllCategories,
+        fetchCategoryWithProducts,
         resetCategory,
-        getProductById
+        // Getters
+        totalCategories: computed(() => categories.value.length),
+        getProductsBySlug: (slug: string) => computed(() => categoryProducts.value[slug] || []),
+        isLoadingForSlug: (slug: string) => computed(() => loadingStates.value[slug] || false)
     };
 });
-
-export { useCategoryStore };
