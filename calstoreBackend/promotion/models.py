@@ -151,6 +151,7 @@ class FlashSale(models.Model):
     Promotions flash limitées dans le temps
     """
     name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
     products = models.ManyToManyField(Product, through='FlashSaleProduct')
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()

@@ -6,19 +6,20 @@
     </div>
 
     <transition name="mobile-menu">
-
-      <div class="nav__links" :class="{'mobile-active': isOpen}" v-show="isOpen">
+      <div class="nav__links" :class="{'mobile-active': isOpen}" v-show="showMenu">
         <RouterLink to="/">Accueil</RouterLink>
         
         <div 
           class="categories-container"
-          @mouseenter="handleMouseEnter"
-          @mouseleave="handleMouseLeave"
+          ref="categoriesContainerRef"
+          @mouseenter="isDesktop && handleMouseEnter()"
+          @mouseleave="isDesktop && handleMouseLeave()"
         >
+          <!-- Desktop : lien cliquable vers /categories -->
           <RouterLink 
+            v-if="isDesktop"
             to="/categories" 
             class="categories-link"
-            @click.prevent="{handleCategoriesClick}"
           >
             Catégories
             <span class="dropdown-arrow">
@@ -27,13 +28,29 @@
               </svg>
             </span>
           </RouterLink>
+
+          <!-- Tablette / Mobile : bouton qui déroule uniquement -->
+          <button
+            v-else
+            class="categories-link categories-btn"
+            :class="{ 'arrow-open': showDropdown }"
+            @click="handleCategoriesClick"
+          >
+            Catégories
+            <span class="dropdown-arrow">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+              </svg>
+            </span>
+          </button>
           
           <transition name="dropdown">
             <div 
               v-if="showDropdown" 
               class="dropdown-menu"
-              @mouseenter="handleMouseEnter"
-              @mouseleave="handleMouseLeave"
+              ref="dropdownRef"
+              @mouseenter="isDesktop && handleMouseEnter()"
+              @mouseleave="isDesktop && handleMouseLeave()"
             >
               <div class="dropdown-content">
                 
@@ -92,7 +109,7 @@
     <div class="btn__container">
       <researchinput/>
       <cartButton @click="showCartModal"/>
-      <hamburgerButton @click="openHamburgerMenu"/>
+      <hamburgerButton @click="isOpen = !isOpen"/>
     </div>
   </nav>
 </template>
@@ -100,14 +117,13 @@
 <script lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { RouterLink } from 'vue-router'
-// MODIFICATION: Import correct basé sur votre fichier categoryStore.ts
 import { useCategoryStore } from '../../stores/categoryStore' 
 import cartButton from '../button/cartButton.vue'
 import { useCartStore } from '../../stores/cartStore'
 import researchinput from '../input/researchinput.vue'
 import hamburgerButton from '../button/hamburgerButton.vue'
 
-// Interfaces locales (peuvent être importées du store si besoin)
+// Interfaces
 interface Subcategory {
   id: number | string
   name: string
@@ -139,42 +155,51 @@ export default {
   
   setup(props, { emit }: { emit: Emits }) {
 
-    const isOpen = ref(false);
+    const isOpen = ref(false)
 
     const closeMenu = () => {
-      isOpen.value = false;
-      document.body.style.overflow = '';
-    };
+      isOpen.value = false
+      document.body.style.overflow = ''
+    }
+
+    // ✅ Seuil relevé à 1024px : en dessous = tablette/mobile → clic
+    const DESKTOP_BREAKPOINT = 1024
+    const isDesktop = ref(window.innerWidth >= DESKTOP_BREAKPOINT)
+
+    const updateIsDesktop = () => {
+      isDesktop.value = window.innerWidth >= DESKTOP_BREAKPOINT
+      // Fermer le dropdown lors d'un changement de breakpoint
+      if (isDesktop.value) {
+        closeDropdown()
+      }
+    }
+
+    const showMenu = computed(() => isDesktop.value || isOpen.value)
 
     const store = useCartStore()
-    // MODIFICATION: Utilisation du bon store
     const categoryStore = useCategoryStore()
     
-    // État du dropdown
     const showDropdown = ref<boolean>(false)
     const dropdownTimeout = ref<NodeJS.Timeout | null>(null)
+    const dropdownRef = ref<HTMLElement | null>(null)
+    // ✅ Référence sur le conteneur entier (bouton + menu) pour le clic extérieur
+    const categoriesContainerRef = ref<HTMLElement | null>(null)
 
-    // Récupérer les catégories depuis le store
     const categories = computed(() => {
-      // Cast en any si les types ne matchent pas parfaitement entre le store et le composant
       return (categoryStore.categories || []) as any[]
     })
 
-    // Computed pour le loading state
     const isLoading = computed(() => {
       return categoryStore.loadingStates && categoryStore.loadingStates['all']
     })
 
     const error = computed(() => categoryStore.error)
 
-    // Méthodes
     const showCartModal = (): void => {
       emit("opencart")
     }
 
-    // MODIFICATION : Nouvelle logique pour le survol
     const handleMouseEnter = (): void => {
-      // Annuler la fermeture si elle était prévue (debounce)
       if (dropdownTimeout.value) {
         clearTimeout(dropdownTimeout.value)
         dropdownTimeout.value = null
@@ -182,41 +207,51 @@ export default {
       
       showDropdown.value = true
 
-      // LAZY LOADING : Fetch seulement si vide et pas en cours de chargement
       if (categoryStore.categories.length === 0 && !isLoading.value) {
-        // Utilisation de la méthode fetchAllCategories définie dans categoryStore.ts
         categoryStore.fetchAllCategories()
       }
     }
 
     const handleMouseLeave = (): void => {
-      // Délai pour éviter la fermeture trop rapide (meilleure UX)
       dropdownTimeout.value = setTimeout(() => {
         showDropdown.value = false
       }, 300)
     }
 
     const handleCategoriesClick = (): void => {
-      if (window.innerWidth < 768) {
-        // Sur mobile, le click toggle le menu et lance le fetch si besoin
+      // ✅ Sur tablette/mobile : toggle au clic
+      if (!isDesktop.value) {
         if (!showDropdown.value) {
-           handleMouseEnter()
+          handleMouseEnter()
         } else {
-           showDropdown.value = false
+          closeDropdown()
         }
       }
+      // Sur desktop : le hover gère tout, le clic ne fait rien
     }
 
     const closeDropdown = (): void => {
       showDropdown.value = false
       if (dropdownTimeout.value) {
         clearTimeout(dropdownTimeout.value)
+        dropdownTimeout.value = null
       }
     }
 
     const cancelMouseLeave = (): void => {
       if (dropdownTimeout.value) {
         clearTimeout(dropdownTimeout.value)
+      }
+    }
+
+    // ✅ Clic extérieur : on vérifie le conteneur entier (bouton + dropdown)
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        !isDesktop.value &&
+        categoriesContainerRef.value &&
+        !categoriesContainerRef.value.contains(event.target as Node)
+      ) {
+        closeDropdown()
       }
     }
 
@@ -229,13 +264,15 @@ export default {
     // Lifecycle
     onMounted((): void => {
       window.addEventListener('scroll', handleScroll)
-      
-      // SUPPRESSION : On ne charge plus automatiquement au montage
-      // if (categoryStore.categories.length === 0) { ... }
+      window.addEventListener('resize', updateIsDesktop)
+      document.addEventListener('click', handleClickOutside)
+      updateIsDesktop()
     })
 
     onBeforeUnmount((): void => {
       window.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('resize', updateIsDesktop)
+      document.removeEventListener('click', handleClickOutside)
       if (dropdownTimeout.value) {
         clearTimeout(dropdownTimeout.value)
       }
@@ -245,27 +282,27 @@ export default {
       isOpen,
       isScrolled,
       store,
-      categoryStore, // Retourné pour accès template si besoin
+      categoryStore,
+      showMenu,
       showCartModal,
       showDropdown,
       categories,
       isLoading,
       error,
-      openHamburgerMenu,
       handleCategoriesClick,
       closeDropdown,
-      handleMouseEnter, // Nouvelle méthode retournée
+      handleMouseEnter,
       handleMouseLeave,
-      cancelMouseLeave
+      cancelMouseLeave,
+      dropdownRef,
+      categoriesContainerRef,
+      isDesktop
     }
   }
 }
 </script>
 
 <style scoped>
-
-/* For mobile */
-
 .navbar {
   width: 100%;
   display: flex;
@@ -299,11 +336,10 @@ export default {
   position: relative;
 }
 
-/* Container des catégories */
 .categories-container {
   position: relative;
   display: inline-block;
-  height: 100%; /* Assure que le hover ne se perd pas entre le lien et le menu */
+  height: 100%;
 }
 
 .categories-link {
@@ -316,16 +352,26 @@ export default {
   padding: 8px 0;
 }
 
+/* Reset natif du <button> pour qu'il ressemble au lien */
+.categories-btn {
+  background: none;
+  border: none;
+  font-size: inherit;
+  font-family: inherit;
+  cursor: pointer;
+}
+
 .dropdown-arrow {
   font-size: 0.7rem;
   transition: transform 0.3s ease;
 }
 
-.categories-container:hover .dropdown-arrow {
+/* ✅ Rotation de la flèche au hover (desktop) ET au clic (tablette/mobile) */
+.categories-container:hover .dropdown-arrow,
+.categories-link.arrow-open .dropdown-arrow {
   transform: rotate(180deg);
 }
 
-/* Dropdown Menu */
 .dropdown-menu {
   position: absolute;
   top: 100%;
@@ -342,7 +388,7 @@ export default {
 
 .dropdown-content {
   padding: 12px 0;
-  max-height: 70vh; /* Sécurité pour ne pas dépasser l'écran */
+  max-height: 70vh;
   overflow-y: auto;
 }
 
@@ -363,7 +409,6 @@ export default {
   background-color: #f5f5f5;
 }
 
-/* Sous-catégories */
 .subcategories {
   padding-left: 20px;
   border-left: 2px solid #eee;
@@ -386,7 +431,6 @@ export default {
   background-color: transparent;
 }
 
-/* Animation */
 .dropdown-enter-active,
 .dropdown-leave-active {
   transition: all 0.3s ease;
@@ -406,7 +450,6 @@ export default {
   gap: 0.5rem;
 }
 
-/* Animation personnalisée */
 @keyframes slideDown {
   from {
     opacity: 0;
@@ -418,9 +461,25 @@ export default {
   }
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+/* ✅ Tablette (769px – 1023px) : menu visible, dropdown en position statique */
+@media (max-width: 1023px) and (min-width: 769px) {
+  .categories-container {
+    position: static;
+  }
 
+  .dropdown-menu {
+    position: fixed;
+    top: 70px;
+    left: 0;
+    right: 0;
+    min-width: auto;
+    border-radius: 0;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Mobile (≤ 768px) */
+@media (max-width: 768px) {
   .nav__links {
     display: none;
   }
@@ -453,7 +512,16 @@ export default {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   }
 }
-/* À ajouter temporairement pour le test */
+
+/* Sur desktop, on désactive la transition mobile-menu */
+@media (min-width: 1024px) {
+  .mobile-menu-enter-active,
+  .mobile-menu-leave-active {
+    transition: none !important;
+  }
+}
+
+/* Dark mode temporaire */
 @media (prefers-color-scheme: dark) {
   .navbar,
   .navbar * {

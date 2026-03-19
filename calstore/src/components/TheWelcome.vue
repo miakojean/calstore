@@ -2,9 +2,9 @@
   <section class="brand-section">
     <div class="brand-content">
       <div class="text-content">
-        <h2>Découvrez notre nouvel arrivage de sacs à main</h2>
+        <h2>{{ promotionStore.flashsale?.name }}</h2>
         <p class="discount-info">
-          🔥 Profitez de <span class="highlight">-30%</span> sur une sélection d'articles. Offre à durée limitée !
+          🔥 Profitez de <span class="highlight"> -30%</span> sur une sélection d'articles. Offre à durée limitée !
         </p>
         <div class="btn__section">
           <mainbutton/>
@@ -21,12 +21,27 @@
 <script lang="ts">
 import mainbutton from './button/mainbutton.vue';
 import seconbutton from './button/seconbutton.vue';
+import { usePrmotionStore } from '@/stores/promotionStore';
+import { onMounted } from 'vue';
 
 export default {
   name: "BrandSection",
   components: {
     mainbutton,
     seconbutton
+  },
+  setup(){
+    // state
+    const promotionStore = usePrmotionStore();
+
+    // lifecycle
+    onMounted(() => {
+      promotionStore.fetchFlashsales();
+    })
+
+    return {
+      promotionStore
+    }
   }
 }
 </script>

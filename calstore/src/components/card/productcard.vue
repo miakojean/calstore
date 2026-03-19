@@ -25,7 +25,7 @@
             </div>
 
             <div class="product-footer flex flex-col gap-2">
-                <div class="price-section">
+                <div class="price-section flex">
                     <div class="price-group">
                         <span class="current-price">{{ formatPrice(product.price) }}</span>
                         <!-- Afficher le prix comparé si disponible -->

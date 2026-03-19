@@ -38,4 +38,14 @@ class FlashSaleSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = FlashSale
-        fields = ['id', 'name', 'products', 'start_time', 'end_time', 'is_active', 'is_ongoing']
+        fields = [
+            'id', 
+            'name', 
+            'products', 
+            'start_time', 
+            'end_time', 
+            'is_active', 
+            'is_ongoing',
+            'image',
+        ]
+        read_only_fields = ['id','created_at', 'updated_at']
