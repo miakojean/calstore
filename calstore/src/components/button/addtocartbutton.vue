@@ -68,7 +68,7 @@ export default {
 
 .add-to-cart-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px #db8585;
+    box-shadow: 0 2px 2px #292121
 }
 
 .btn-icon {

@@ -16,6 +16,7 @@
         v-for="(product, index) in products" 
         :key="product.id || `product-${index}`" 
         :product="product"
+        :is-loading="cartStore.isLoading"
         @add-to-cart="addToCart"
         @show-product-detail="showProductDetail"
       />
@@ -193,6 +194,7 @@ export default {
     })
 
     return {
+      cartStore,
       categoryStore,
       scrollContainer,
       currentIndex,

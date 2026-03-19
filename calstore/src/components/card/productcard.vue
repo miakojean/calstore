@@ -34,7 +34,7 @@
                         </span>
                     </div>
                    
-                    <details-buton @click="addToCart"/>
+                    <details-buton @click="addToCart" :is-loading="isLoading"/>
                 </div>
                 <addtocartbutton @click="proceedToCheckout" label="Ajouter au panier"/>
             </div>
@@ -50,6 +50,7 @@ import { useRouter } from 'vue-router';
 
 const props = defineProps<{
     product: Product;
+    isLoading?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -107,7 +108,7 @@ const defaultProduct: Product = {
     short_description: "Description courte",
     description: "Description complète",
     discount_percentage: 0,
-    compare_price: null
+    compare_price: null,
 };
 
 // Appliquer les valeurs par défaut si nécessaire

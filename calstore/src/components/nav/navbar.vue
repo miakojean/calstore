@@ -1,93 +1,98 @@
 <template>
   <nav class="navbar" :class="{ 'scrolled': isScrolled }">
+    
     <div class="logo">
       <h3>Calstore</h3>
     </div>
 
-    <div class="nav__links">
-      <RouterLink to="/">Accueil</RouterLink>
-      
-      <div 
-        class="categories-container"
-        @mouseenter="handleMouseEnter"
-        @mouseleave="handleMouseLeave"
-      >
-        <RouterLink 
-          to="/categories" 
-          class="categories-link"
-          @click.prevent="{handleCategoriesClick}"
-        >
-          Catégories
-          <span class="dropdown-arrow">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-            </svg>
-          </span>
-        </RouterLink>
+    <transition name="mobile-menu">
+
+      <div class="nav__links" :class="{'mobile-active': isOpen}" v-show="isOpen">
+        <RouterLink to="/">Accueil</RouterLink>
         
-        <transition name="dropdown">
-          <div 
-            v-if="showDropdown" 
-            class="dropdown-menu"
-            @mouseenter="handleMouseEnter"
-            @mouseleave="handleMouseLeave"
+        <div 
+          class="categories-container"
+          @mouseenter="handleMouseEnter"
+          @mouseleave="handleMouseLeave"
+        >
+          <RouterLink 
+            to="/categories" 
+            class="categories-link"
+            @click.prevent="{handleCategoriesClick}"
           >
-            <div class="dropdown-content">
-              
-              <div v-if="isLoading" class="dropdown-item">
-                <span class="dropdown-link" style="color: #888; cursor: default;">
-                  Chargement...
-                </span>
-              </div>
-
-              <div v-else-if="categories.length === 0 && !error" class="dropdown-item">
-                <span class="dropdown-link" style="cursor: default;">
-                  Aucune catégorie
-                </span>
-              </div>
-
-              <div 
-                v-else
-                v-for="category in categories" 
-                :key="category.id"
-                class="dropdown-item"
-              >
-                <RouterLink 
-                  :to="`/categories/${category.slug}`"
-                  class="dropdown-link"
-                  @click="closeDropdown(); $emit('handle-category', category)"
-                >
-                  {{ category.name }}
-                </RouterLink>
+            Catégories
+            <span class="dropdown-arrow">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+              </svg>
+            </span>
+          </RouterLink>
+          
+          <transition name="dropdown">
+            <div 
+              v-if="showDropdown" 
+              class="dropdown-menu"
+              @mouseenter="handleMouseEnter"
+              @mouseleave="handleMouseLeave"
+            >
+              <div class="dropdown-content">
                 
+                <div v-if="isLoading" class="dropdown-item">
+                  <span class="dropdown-link" style="color: #888; cursor: default;">
+                    Chargement...
+                  </span>
+                </div>
+
+                <div v-else-if="categories.length === 0 && !error" class="dropdown-item">
+                  <span class="dropdown-link" style="cursor: default;">
+                    Aucune catégorie
+                  </span>
+                </div>
+
                 <div 
-                  v-if="category.subcategories && category.subcategories.length"
-                  class="subcategories"
+                  v-else
+                  v-for="category in categories" 
+                  :key="category.id"
+                  class="dropdown-item"
                 >
-                  <RouterLink
-                    v-for="sub in category.subcategories"
-                    :key="sub.id"
-                    :to="{name:category, params:sub.name}"
-                    class="subcategory-link"
-                    @click="closeDropdown"
+                  <RouterLink 
+                    :to="`/categories/${category.slug}`"
+                    class="dropdown-link"
+                    @click="closeDropdown(); $emit('handle-category', category)"
                   >
-                    {{ sub.name }}
+                    {{ category.name }}
                   </RouterLink>
+                  
+                  <div 
+                    v-if="category.subcategories && category.subcategories.length"
+                    class="subcategories"
+                  >
+                    <RouterLink
+                      v-for="sub in category.subcategories"
+                      :key="sub.id"
+                      :to="{name:category, params:sub.name}"
+                      class="subcategory-link"
+                      @click="closeDropdown"
+                    >
+                      {{ sub.name }}
+                    </RouterLink>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </transition>
+          </transition>
+        </div>
+        
+        <RouterLink to="/about">Promotions</RouterLink>
+        <RouterLink to="/about">À propos</RouterLink>
+        <RouterLink to="/contact">Contact</RouterLink>
       </div>
-      
-      <RouterLink to="/about">Promotions</RouterLink>
-      <RouterLink to="/about">À propos</RouterLink>
-      <RouterLink to="/contact">Contact</RouterLink>
-    </div>
+    </transition>
 
     <div class="btn__container">
       <researchinput/>
       <cartButton @click="showCartModal"/>
+      <hamburgerButton @click="openHamburgerMenu"/>
     </div>
   </nav>
 </template>
@@ -100,6 +105,7 @@ import { useCategoryStore } from '../../stores/categoryStore'
 import cartButton from '../button/cartButton.vue'
 import { useCartStore } from '../../stores/cartStore'
 import researchinput from '../input/researchinput.vue'
+import hamburgerButton from '../button/hamburgerButton.vue'
 
 // Interfaces locales (peuvent être importées du store si besoin)
 interface Subcategory {
@@ -125,12 +131,21 @@ export default {
   name: 'Navbar',
   components: {
     cartButton,
-    researchinput
+    researchinput,
+    hamburgerButton
   },
   
   emits: ['opencart', 'handle-category'],
   
   setup(props, { emit }: { emit: Emits }) {
+
+    const isOpen = ref(false);
+
+    const closeMenu = () => {
+      isOpen.value = false;
+      document.body.style.overflow = '';
+    };
+
     const store = useCartStore()
     // MODIFICATION: Utilisation du bon store
     const categoryStore = useCategoryStore()
@@ -227,6 +242,7 @@ export default {
     })
 
     return {
+      isOpen,
       isScrolled,
       store,
       categoryStore, // Retourné pour accès template si besoin
@@ -235,6 +251,7 @@ export default {
       categories,
       isLoading,
       error,
+      openHamburgerMenu,
       handleCategoriesClick,
       closeDropdown,
       handleMouseEnter, // Nouvelle méthode retournée
@@ -246,6 +263,9 @@ export default {
 </script>
 
 <style scoped>
+
+/* For mobile */
+
 .navbar {
   width: 100%;
   display: flex;
@@ -400,6 +420,25 @@ export default {
 
 /* Responsive */
 @media (max-width: 768px) {
+
+  .nav__links {
+    display: none;
+  }
+
+  .nav__links.mobile-active {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 70px;
+    left: 0;
+    right: 0;
+    background-color: white;
+    padding: 1rem 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 999;
+    transition: ease-in 0.3s;
+  }
+
   .categories-container {
     position: static;
   }
