@@ -453,4 +453,15 @@ export default {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   }
 }
+/* À ajouter temporairement pour le test */
+@media (prefers-color-scheme: dark) {
+  .navbar,
+  .navbar * {
+    color: white;
+  }
+  
+  .navbar {
+    background-color: #1a1a1a;
+  }
+}
 </style>
