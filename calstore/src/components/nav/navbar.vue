@@ -15,7 +15,7 @@
         <RouterLink 
           to="/categories" 
           class="categories-link"
-          @click.prevent="handleCategoriesClick"
+          @click.prevent="{handleCategoriesClick}"
         >
           Catégories
           <span class="dropdown-arrow">
@@ -55,7 +55,7 @@
                 <RouterLink 
                   :to="`/categories/${category.slug}`"
                   class="dropdown-link"
-                  @click="closeDropdown"
+                  @click="closeDropdown(); $emit('handle-category', category)"
                 >
                   {{ category.name }}
                 </RouterLink>
@@ -80,6 +80,7 @@
         </transition>
       </div>
       
+      <RouterLink to="/about">Promotions</RouterLink>
       <RouterLink to="/about">À propos</RouterLink>
       <RouterLink to="/contact">Contact</RouterLink>
     </div>
@@ -116,7 +117,8 @@ interface Category {
 }
 
 interface Emits {
-  (e: 'opencart'): void
+  (e: 'opencart'): void,
+  (e: 'handle-category'): void
 }
 
 export default {
@@ -125,9 +127,9 @@ export default {
     cartButton,
     researchinput
   },
-  emits: {
-    opencart: null
-  },
+  
+  emits: ['opencart', 'handle-category'],
+  
   setup(props, { emit }: { emit: Emits }) {
     const store = useCartStore()
     // MODIFICATION: Utilisation du bon store

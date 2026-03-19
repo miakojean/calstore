@@ -1,19 +1,25 @@
 <template>
   <main>
-    <navbar @opencart="showCartModal = true"/>
-    <categorysection />
+    <navbar @opencart="showCartModal = true" />
+    <categorysection 
+      :title="currentCategory"
+      :slug="currentCategory" 
+
+    />
     <footerSection/>
     <cartmodal :isOpen="showCartModal" @close="showCartModal = false"/>
   </main>
 </template>
 
 <script>
-import { ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import TheWelcome from '../components/TheWelcome.vue'
 import navbar from '@/components/nav/navbar.vue';
 import categorysection from '@/components/section/categorysection.vue';
 import cartmodal from '@/components/modal/cartmodal.vue';
 import footerSection from '@/components/section/footerSection.vue';
+import { useRoute } from 'vue-router';
+import { useCategoryStore } from '@/stores/categoryStore';
 
 export default {
   name: 'HomePage',
@@ -25,6 +31,8 @@ export default {
     footerSection
   },
   setup() {
+
+    // state
     const showCartModal = ref(false)
 
     const handBag = ref([
@@ -57,11 +65,35 @@ export default {
         rating: 4.2,
         reviewCount: 89
       }
-    ])
+    ]);
+
+    const categoryStore = useCategoryStore();
+    const route = useRoute()
+
+    // Au lieu de route.name
+    const currentCategory = computed(() => route.params.slug);
+
+    // getters
+
+    // actions
+
+    onMounted(()=>{
+      console.log('Vous êtes actuellement dans', currentCategory.value)
+    })
+
+    watch(currentCategory, ()=>{
+      console.log('Nouvelle route détectée', currentCategory.value)
+    })
 
     return {
+      //state
       showCartModal,
-      handBag
+      handBag,
+      categoryStore,
+      route,
+      currentCategory
+
+      //getter
     }
   }
 }

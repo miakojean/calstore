@@ -2,12 +2,16 @@ from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 from django.contrib.auth.models import User
-from ecommerce.models import Product  # ou votre modèle Produit
+from ecommerce.models import (
+    Product, 
+    Order,
+    Category
+)  # ou votre modèle Produit
 
 class Promotion(models.Model):
     """
     Modèle pour les promotions avec différentes options
-    """
+    """ 
     TYPE_CHOICES = [
         ('percentage', 'Pourcentage'),
         ('fixed', 'Montant fixe'),
@@ -45,7 +49,7 @@ class Promotion(models.Model):
     
     # Produits concernés
     products = models.ManyToManyField(Product, related_name='promotions', blank=True)
-    categories = models.ManyToManyField('ecommerce.Category', blank=True)  # si vous avez des catégories
+    categories = models.ManyToManyField(Category, blank=True)  # si vous avez des catégories
     all_products = models.BooleanField(default=False, help_text="S'applique à tous les produits")
     
     # Période de validité
@@ -133,7 +137,7 @@ class UserPromotionUsage(models.Model):
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     promotion = models.ForeignKey(Promotion, on_delete=models.CASCADE)
-    order = models.ForeignKey('orders.Order', on_delete=models.SET_NULL, null=True, blank=True)
+    order = models.ForeignKey(Order, on_delete=models.SET_NULL, null=True, blank=True)
     used_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
@@ -151,6 +155,7 @@ class FlashSale(models.Model):
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     is_active = models.BooleanField(default=True)
+    image = models.ImageField(upload_to='flashSales/')
     
     def __str__(self):
         return self.name

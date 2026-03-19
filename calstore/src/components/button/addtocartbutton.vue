@@ -46,7 +46,7 @@ export default {
 <style scoped>
 
 .add-to-cart-btn {
-    background-color: #ed5959;
+    background: var(--my-black-color);
     color: white;
     border: none; 
     padding: 0.8rem ;
