@@ -4,7 +4,7 @@ from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import PromotionSerializer, FlashSaleSerializer
+from .serializers import (PromotionSerializer, FlashSaleSerializer, FlashSaleSimpleSerializer)
 from .models import Promotion, FlashSale
 
 # --- VUE 1 : La Promotion "Principale" (La plus récente et active) ---
@@ -87,5 +87,33 @@ class ActiveFlashSalesView(APIView):
         return Response({
             'status': 'success',
             'message': 'Ventes flash en cours récupérées',
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
+
+class CurrentFlashSaleView(APIView):
+    """
+    Retourne la vente flash en cours avec ses produits (structure plate).
+    """
+    def get(self, request):
+        now = timezone.now()
+
+        flash_sale = FlashSale.objects.filter(
+            is_active=True,
+            start_time__lte=now,
+            end_time__gte=now
+        ).prefetch_related('flashsaleproduct_set__product').first()
+
+        if not flash_sale:
+            return Response({
+                'status': 'info',
+                'message': 'Aucune vente flash en cours',
+                'data': None
+            }, status=status.HTTP_200_OK)
+
+        serializer = FlashSaleSimpleSerializer(flash_sale, context={'request': request})
+
+        return Response({
+            'status': 'success',
+            'message': 'Vente flash en cours récupérée',
             'data': serializer.data
         }, status=status.HTTP_200_OK)

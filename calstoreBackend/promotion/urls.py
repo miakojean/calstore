@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import MainPromotionView, ActivePromotionsView, ActiveFlashSalesView
+from .views import (MainPromotionView, ActivePromotionsView, ActiveFlashSalesView, CurrentFlashSaleView)
 
 urlpatterns = [
     # Endpoint pour la promotion "Star" (Bannière)
@@ -10,4 +10,6 @@ urlpatterns = [
     
     # Endpoint pour les ventes flash (Optionnel)
     path('flash-sales/', ActiveFlashSalesView.as_view(), name='flash-sales'),
+
+    path('flash-sales/current/', CurrentFlashSaleView.as_view(), name='current-flash-sale'), # ← nouveau
 ]

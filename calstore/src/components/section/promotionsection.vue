@@ -9,7 +9,7 @@
       <productcard 
         v-for="(product, index) in products" 
         :key="product.id || index" 
-        :product="product"
+        :product="promotionStore.flashSaleProducts"
         @add-to-cart="addToCart"
       />
     </div>
@@ -34,6 +34,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import productcard from '../card/productcard.vue'
 import morebutton from '../button/morebutton.vue';
 import { useCartStore } from '../../stores/cartStore'
+import { usePromotionStore } from '@/stores/promotionStore';
 
 // Interface pour les produits
 interface Product {
@@ -57,11 +58,11 @@ export default {
   props: {
     title: {
       type: String,
-      default: "Chaussures"
+      default: "Promotions du moments"
     },
     description: {
       type: String,
-      default: "Découvrir notre panoplie de chaussures"
+      default: "Découvrir nos différentes promotions du moments"
     },
     products: {
       type: Array as () => Product[],
@@ -111,6 +112,7 @@ export default {
   },
   emits: ['view-all'],
   setup(props, { emit }) {
+    const promotionStore = usePromotionStore()
     const scrollContainer = ref<HTMLElement | null>(null)
     const currentIndex = ref(0)
     const cartStore = useCartStore()
@@ -203,7 +205,7 @@ export default {
 
     // --- FIN DE LA LOGIQUE MISE À JOUR ---
 
-    onMounted(() => {
+    onMounted(async() => {
       // Attendre un tick que le DOM soit prêt, surtout pour getStepWidth
       setTimeout(() => {
         setupCarousel()
@@ -214,6 +216,9 @@ export default {
         resizeObserver = new ResizeObserver(handleResize)
         resizeObserver.observe(scrollContainer.value)
       }
+
+      // Charger les promotions flash
+      await promotionStore.fetchFlashsales()
     })
 
     onUnmounted(() => {
@@ -223,6 +228,7 @@ export default {
     })
 
     return {
+      promotionStore,
       scrollContainer,
       currentIndex,
       handleScroll,

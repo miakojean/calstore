@@ -27,6 +27,11 @@ const router = createRouter({
       // which is lazy-loaded when the route is visited.
       component: () => import('../views/AboutView.vue'),
     },
+    {
+      path: '/promotions',
+      name: 'promotions',
+      component: () => import('../views/PromotionView.vue')
+    },
     // === Routes for managing products and cart ===
     {
       path: '/cart-checkout',

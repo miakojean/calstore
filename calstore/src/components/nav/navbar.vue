@@ -100,7 +100,7 @@
           </transition>
         </div>
         
-        <RouterLink to="/about">Promotions</RouterLink>
+        <RouterLink to="/promotions">Promotions</RouterLink>
         <RouterLink to="/about">À propos</RouterLink>
         <RouterLink to="/contact">Contact</RouterLink>
       </div>

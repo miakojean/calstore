@@ -2,7 +2,7 @@
   <section class="brand-section">
     <div class="brand-content">
       <div class="text-content">
-        <h2>{{ promotionStore.flashsale?.name }}</h2>
+        <h2>{{ promotionStore.currentFlashSale?.name }}</h2>
         <p class="discount-info">
           🔥 Profitez de <span class="highlight"> -30%</span> sur une sélection d'articles. Offre à durée limitée !
         </p>
@@ -21,7 +21,7 @@
 <script lang="ts">
 import mainbutton from './button/mainbutton.vue';
 import seconbutton from './button/seconbutton.vue';
-import { usePrmotionStore } from '@/stores/promotionStore';
+import { usePromotionStore } from '@/stores/promotionStore';
 import { onMounted } from 'vue';
 
 export default {
@@ -32,11 +32,11 @@ export default {
   },
   setup(){
     // state
-    const promotionStore = usePrmotionStore();
+    const promotionStore = usePromotionStore();
 
     // lifecycle
     onMounted(() => {
-      promotionStore.fetchFlashsales();
+      promotionStore.fetchCurrentFlashSale();
     })
 
     return {
