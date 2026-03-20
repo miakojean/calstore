@@ -35,10 +35,6 @@
         ></span>
       </div>
     </template>
-
-    <div class="section-footer">
-      <morebutton :label="buttonLabel" @click="$emit('view-all')"/>
-    </div>
   </section>
 </template>
 

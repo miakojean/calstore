@@ -36,8 +36,8 @@
           <h4 class="column-title">Boutique</h4>
           <ul class="footer-links">
             <li><a href="#" class="footer-link">Nouveautés</a></li>
-            <li><a href="#" class="footer-link">Chaussures Homme</a></li>
-            <li><a href="#" class="footer-link">Chaussures Femme</a></li>
+            <li><a href="#" class="footer-link">A propos</a></li>
+            <li><a href="#" class="footer-link">Contact</a></li>
             <li><a href="#" class="footer-link">Promotions</a></li>
             <li><a href="#" class="footer-link">Collections</a></li>
           </ul>

@@ -32,10 +32,6 @@
       ></span>
     </div>
 
-    <div class="section-footer">
-      <morebutton :label="buttonLabel" @click="$emit('view-all')"/>
-    </div>
-
     <ProductDetailModal 
       :isOpen="isOpen" 
       :product="selectedProduct" 
