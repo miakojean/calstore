@@ -342,6 +342,59 @@ export default {
   height: 100%;
 }
 
+/* ───── Lien actif ───── */
+
+/* Trait animé sous chaque lien de la nav */
+.nav__links a,
+.categories-link {
+  position: relative;
+}
+
+.nav__links a::after,
+.categories-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: #000;
+  border-radius: 2px;
+  transition: width 0.25s ease;
+}
+
+/* Au hover : trait partiel */
+.nav__links a:hover::after,
+.categories-container:hover .categories-link::after {
+  width: 100%;
+}
+
+/* Onglet actif : trait plein + texte en gras */
+.nav__links a.router-link-active::after,
+.nav__links a.router-link-exact-active::after {
+  width: 100%;
+}
+
+.nav__links a.router-link-active,
+.nav__links a.router-link-exact-active {
+  font-weight: 600;
+  color: #000;
+}
+
+/* Catégories actives (lien desktop) */
+.categories-link.router-link-active::after,
+.categories-link.router-link-exact-active::after {
+  width: 100%;
+}
+
+.categories-link.router-link-active,
+.categories-link.router-link-exact-active {
+  font-weight: 600;
+  color: #000;
+}
+
+/* ─────────────────────── */
+
 .categories-link {
   display: flex;
   align-items: center;
@@ -498,6 +551,19 @@ export default {
     transition: ease-in 0.3s;
   }
 
+  /* Sur mobile : indicateur en liseré gauche plutôt qu'en trait bas */
+  .nav__links a::after,
+  .categories-link::after {
+    display: none;
+  }
+
+  .nav__links a.router-link-active,
+  .nav__links a.router-link-exact-active {
+    border-left: 3px solid #000;
+    padding-left: 0.75rem;
+    color: #000;
+  }
+
   .categories-container {
     position: static;
   }
@@ -530,6 +596,16 @@ export default {
   
   .navbar {
     background-color: #1a1a1a;
+  }
+
+  .nav__links a::after,
+  .categories-link::after {
+    background-color: white;
+  }
+
+  .nav__links a.router-link-active,
+  .nav__links a.router-link-exact-active {
+    color: white;
   }
 }
 </style>

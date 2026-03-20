@@ -4,24 +4,37 @@
       <h4 class="section-title">{{ title }}</h4>
       <p class="section-description">{{ description }}</p>
     </div>
-    
-    <div class="category__container" ref="scrollContainer" @scroll="handleScroll">
-      <productcard 
-        v-for="(product, index) in products" 
-        :key="product.id || index" 
-        :product="promotionStore.flashSaleProducts"
-        @add-to-cart="addToCart"
-      />
+
+    <!-- État de chargement : 1 skeleton mobile, 3 desktop -->
+    <div v-if="promotionStore.loading" class="skeleton-container">
+      <ProductCardSkeleton v-for="i in skeletonCount" :key="i" />
     </div>
-    
-    <div class="carousel-indicators">
-      <span 
-        v-for="(product, index) in products" 
-        :key="product.id || index"
-        :class="['indicator', { active: currentIndex === index }]"
-        @click="scrollToIndex(index, products.length)"
-      ></span>
+
+    <!-- Aucune promo active -->
+    <div v-else-if="!promotionStore.currentFlashSale" class="promo-state">
+      Aucune vente flash en cours.
     </div>
+
+    <!-- Carrousel des produits flash -->
+    <template v-else>
+      <div class="category__container" ref="scrollContainer" @scroll="handleScroll">
+        <promoproductcard
+          v-for="(product, index) in promotionStore.currentFlashSale.products"
+          :key="product.id ?? index"
+          :product="product"
+          @add-to-cart="addToCart"
+        />
+      </div>
+
+      <div class="carousel-indicators">
+        <span 
+          v-for="(product, index) in promotionStore.currentFlashSale.products"
+          :key="product.id ?? index"
+          :class="['indicator', { active: currentIndex === index }]"
+          @click="scrollToIndex(index, promotionStore.currentFlashSale.products.length)"
+        ></span>
+      </div>
+    </template>
 
     <div class="section-footer">
       <morebutton :label="buttonLabel" @click="$emit('view-all')"/>
@@ -31,204 +44,101 @@
 
 <script lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import productcard from '../card/productcard.vue'
+import promoproductcard from '../card/promoProductCard.vue'
 import morebutton from '../button/morebutton.vue';
 import { useCartStore } from '../../stores/cartStore'
 import { usePromotionStore } from '@/stores/promotionStore';
-
-// Interface pour les produits
-interface Product {
-  id: number | string;
-  name: string;
-  price: number;
-  image: string;
-  description?: string;
-  originalPrice?: number;
-  discount?: string;
-  rating?: number;
-  reviewCount?: number;
-}
+import type { FlashSaleSimpleProduct } from '@/stores/promotionStore';
+import ProductCardSkeleton from '../card/ProductCardSkeleton.vue';
 
 export default {
-  name: 'CategorySection',
+  name: 'PromotionSection',
   components: {
-    productcard,
+    ProductCardSkeleton,
+    promoproductcard,
     morebutton
   },
   props: {
-    title: {
-      type: String,
-      default: "Promotions du moments"
-    },
-    description: {
-      type: String,
-      default: "Découvrir nos différentes promotions du moments"
-    },
-    products: {
-      type: Array as () => Product[],
-      default: () => [
-        {
-          id: 1,
-          name: "Basket simple blanche",
-          price: 89.99,
-          image: "Copilot_20251107_112529.png",
-          description: "Basket blanche élégante et confortable",
-          rating: 4.5,
-          reviewCount: 128
-        },
-        {
-          id: 2,
-          name: "Basket running noire", 
-          price: 119.99,
-          image: "Copilot_20251107_112743.png",
-          description: "Parfaite pour le sport",
-          rating: 4.2,
-          reviewCount: 89
-        },
-        {
-          id: 3,
-          name: "Soulier noir", 
-          price: 119.99,
-          image: "Copilot_20251107_112754.png",
-          description: "Parfaite pour cérémonie",
-          rating: 4.2,
-          reviewCount: 89
-        },
-        {
-          id: 3, // Attention: ID en double, vous devriez avoir un ID unique
-          name: "Soulier noir", 
-          price: 119.99,
-          image: "Copilot_20251107_112754.png",
-          description: "Parfaite pour cérémonie",
-          rating: 4.2,
-          reviewCount: 89
-        }
-      ]
-    },
-    buttonLabel: {
-      type: String,
-      default: "Voir tous les articles"
-    }
+    title: { type: String, default: "Ventes Flash" },
+    description: { type: String, default: "Offres limitées, profitez-en avant la fin !" },
+    buttonLabel: { type: String, default: "Voir tous les articles" }
   },
   emits: ['view-all'],
-  setup(props, { emit }) {
+  setup() {
     const promotionStore = usePromotionStore()
     const scrollContainer = ref<HTMLElement | null>(null)
     const currentIndex = ref(0)
     const cartStore = useCartStore()
     let resizeObserver: ResizeObserver | null = null
 
-    const addToCart = (product: Product) => {
+    // ✅ 1 skeleton sur mobile, 3 sur desktop (≥1024px)
+    const skeletonCount = ref(window.innerWidth >= 1024 ? 3 : 1)
+    const updateSkeletonCount = () => {
+      skeletonCount.value = window.innerWidth >= 1024 ? 3 : 1
+    }
+
+    const addToCart = (product: FlashSaleSimpleProduct) => {
       cartStore.addToCart({
         id: product.id,
         name: product.name,
-        price: product.price,
-        image: product.image
+        price: parseFloat(product.flash_price),
+        image: product.image ?? ''
       })
     }
 
-    // --- LOGIQUE MISE À JOUR ---
-
-    /**
-     * Calcule la largeur de défilement pour un "pas" 
-     * (largeur d'une carte + l'espace 'gap')
-     */
     const getStepWidth = (): number => {
       if (scrollContainer.value && scrollContainer.value.children.length > 0) {
-        // 1. Obtenir la première carte
         const firstCard = scrollContainer.value.children[0] as HTMLElement
-        // 2. Obtenir son style calculé
         const cardStyle = window.getComputedStyle(firstCard)
-        // 3. Obtenir le style du conteneur (pour le 'gap')
         const containerStyle = window.getComputedStyle(scrollContainer.value)
-
-        // 4. Calculer la largeur totale de la carte (incluant marge, si besoin)
         const cardWidth = firstCard.offsetWidth + parseFloat(cardStyle.marginLeft) + parseFloat(cardStyle.marginRight)
-        
-        // 5. Obtenir l'espace 'gap'
-        // Utilise parseFloat pour gérer les "rem" ou "px" et || 0 comme fallback
-        const gap = parseFloat(containerStyle.gap) || 0 
-
-        // Le "pas" est la largeur de la carte + l'espace
+        const gap = parseFloat(containerStyle.gap) || 0
         return cardWidth + gap
       }
       return 0
     }
 
-    /**
-     * Réinitialise le scroll et l'index
-     */
     const setupCarousel = () => {
-      if (scrollContainer.value) {
-        scrollContainer.value.scrollLeft = 0
-      }
-      currentIndex.value = 0 // Important : réinitialiser l'index
+      if (scrollContainer.value) scrollContainer.value.scrollLeft = 0
+      currentIndex.value = 0
     }
 
-    /**
-     * Met à jour l'index en fonction de la position de défilement
-     */
     const handleScroll = () => {
       if (scrollContainer.value) {
-        const scrollLeft = scrollContainer.value.scrollLeft
         const stepWidth = getStepWidth()
-
-        // S'assurer de ne pas diviser par zéro
         if (stepWidth > 0) {
-          // Utiliser Math.round pour "snapper" à l'index le plus proche
-          currentIndex.value = Math.round(scrollLeft / stepWidth)
+          currentIndex.value = Math.round(scrollContainer.value.scrollLeft / stepWidth)
         }
       }
     }
 
-    /**
-     * Fait défiler le carrousel vers un index spécifique
-     */
     const scrollToIndex = (index: number, productLength: number) => {
       if (scrollContainer.value) {
-        const stepWidth = getStepWidth()
-        scrollContainer.value.scrollTo({
-          left: index * stepWidth,
-          behavior: 'smooth'
-        })
-      };
-      console.log(`vous avez ${productLength - 1} élements à afficher`)
+        scrollContainer.value.scrollTo({ left: index * getStepWidth(), behavior: 'smooth' })
+      }
     }
 
-    /**
-     * Gère le redimensionnement de la fenêtre
-     */
-    const handleResize = () => {
-      // Réinitialise le carrousel pour recalculer les positions
-      setupCarousel()
-    }
+    onMounted(async () => {
+      // ✅ promotionStore.loading gère l'état — pas besoin d'un isloading local
+      await promotionStore.fetchCurrentFlashSale()
+      setTimeout(() => setupCarousel(), 0)
 
-    // --- FIN DE LA LOGIQUE MISE À JOUR ---
-
-    onMounted(async() => {
-      // Attendre un tick que le DOM soit prêt, surtout pour getStepWidth
-      setTimeout(() => {
-        setupCarousel()
-      }, 0)
-      
-      // Observer les changements de taille pour le responsive
       if (scrollContainer.value) {
-        resizeObserver = new ResizeObserver(handleResize)
+        resizeObserver = new ResizeObserver(setupCarousel)
         resizeObserver.observe(scrollContainer.value)
       }
 
-      // Charger les promotions flash
-      await promotionStore.fetchFlashsales()
+      window.addEventListener('resize', updateSkeletonCount)
     })
 
     onUnmounted(() => {
-      if (resizeObserver) {
-        resizeObserver.disconnect()
-      }
+      if (resizeObserver) resizeObserver.disconnect()
+      window.removeEventListener('resize', updateSkeletonCount)
     })
 
     return {
       promotionStore,
+      skeletonCount,
       scrollContainer,
       currentIndex,
       handleScroll,
@@ -265,6 +175,18 @@ export default {
   line-height: 1.4;
 }
 
+/* ✅ Skeleton container : même layout que le carrousel */
+.skeleton-container {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 0.5rem;
+  overflow: hidden;
+}
+
+.skeleton-container > * {
+  flex: 0 0 85%;
+}
+
 .category__container {
   display: flex;
   gap: 1rem;
@@ -289,7 +211,13 @@ export default {
   scroll-snap-stop: always;
 }
 
-/* Indicateurs */
+.promo-state {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
 .carousel-indicators {
   display: flex;
   justify-content: center;
@@ -332,12 +260,11 @@ export default {
     padding: 0 1rem;
   }
 
-  .section-title {
-    font-size: 2rem;
-  }
+  .section-title { font-size: 2rem; }
+  .section-description { font-size: 1rem; }
 
-  .section-description {
-    font-size: 1rem;
+  .skeleton-container > * {
+    flex: 0 0 calc(50% - 0.75rem);
   }
 
   .category__container {
@@ -350,67 +277,52 @@ export default {
     flex: 0 0 calc(50% - 0.75rem);
   }
 
-  /* AMÉLIORATION : S'assurer qu'ils restent cachés 
-  .carousel-indicators {
-    display: none;
-  } */
-
-  .indicator {
-    width: 10px;
-    height: 10px;
-  }
+  .indicator { width: 10px; height: 10px; }
 }
 
-/* Desktop - Pleine largeur */
+/* Desktop */
 @media (min-width: 1024px) {
   .category-section {
-    width: 100%;           /* Force la largeur à 100% */
-    max-width: none;       /* ANNULE la limite de 1200px héritée du mode tablette */
-    margin: 0;             /* Enlève le centrage automatique */
-    padding: 3rem 2rem;    /* Un peu d'espace sur les bords de l'écran */
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 3rem 2rem;
+  }
+
+  /* ✅ 3 skeletons côte à côte sur desktop */
+  .skeleton-container {
+    gap: 2rem;
+    padding: 0;
+  }
+
+  .skeleton-container > * {
+    flex: 0 0 calc(25% - 1.5rem);
   }
 
   .category__container {
     width: 100%;
     gap: 2rem;
-    padding: 0;           /* On enlève le padding interne du conteneur pour aligner avec le titre */
-    background: transparent; /* Optionnel : enlever le fond gris si on veut un look épuré */
-    
-    /* Configuration grille sans scroll */
+    padding: 0;
+    background: transparent;
     overflow-x: visible;
     flex-wrap: wrap;
-    justify-content: center; /* Aligne les produits à gauche */
+    justify-content: center;
   }
 
   .category__container > * {
-    /* CALCUL POUR 4 ITEMS PAR LIGNE (25%) 
-       C'est plus esthétique en pleine largeur que 3 items
-       La formule est : (100% / nb_items) - gap
-    */
-    flex: 0 0 calc(25% - 1.5rem); 
-    
+    flex: 0 0 calc(25% - 1.5rem);
     scroll-snap-align: none;
   }
 
   .section-header {
-    text-align: left;     /* Aligne le titre à gauche */
-    padding: 0;           /* Aligne avec les cartes */
+    text-align: left;
+    padding: 0;
     margin-bottom: 2rem;
   }
 
-  .section-footer {
-    padding: 2rem 0 0 0;
-  }
-  
-  /* On cache la navigation mobile */
-  .carousel-indicators {
-    display: none;
-  }
-}
+  .section-footer { padding: 2rem 0 0 0; }
 
-/* Animation d'ajout au panier */
-.added-to-cart {
-  animation: addToCart 1s ease;
+  .carousel-indicators { display: none; }
 }
 
 @keyframes addToCart {

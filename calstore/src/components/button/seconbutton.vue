@@ -39,6 +39,7 @@ button{
     border-radius: 1.5rem;
     font-size: 1rem;
     font-weight: 600;
+    cursor: pointer;
 }
 
 </style>

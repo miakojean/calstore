@@ -4,11 +4,11 @@
       <div class="text-content">
         <h2>{{ promotionStore.currentFlashSale?.name }}</h2>
         <p class="discount-info">
-          🔥 Profitez de <span class="highlight"> -30%</span> sur une sélection d'articles. Offre à durée limitée !
+          Profitez jusqu'à <span class="highlight"> -25%</span> sur une sélection d'articles. Offre à durée limitée !
         </p>
         <div class="btn__section">
           <mainbutton/>
-          <seconbutton/>
+          <seconbutton @click="() => router.push('/promotions')"/>
         </div>
       </div>
       <div class="image-content">
@@ -22,7 +22,8 @@
 import mainbutton from './button/mainbutton.vue';
 import seconbutton from './button/seconbutton.vue';
 import { usePromotionStore } from '@/stores/promotionStore';
-import { onMounted } from 'vue';
+import { onMounted } from 'vue'; 
+import { useRouter } from 'vue-router';
 
 export default {
   name: "BrandSection",
@@ -33,6 +34,7 @@ export default {
   setup(){
     // state
     const promotionStore = usePromotionStore();
+    const router = useRouter();
 
     // lifecycle
     onMounted(() => {
@@ -40,6 +42,7 @@ export default {
     })
 
     return {
+      router,
       promotionStore
     }
   }

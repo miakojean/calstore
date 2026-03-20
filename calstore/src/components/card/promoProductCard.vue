@@ -1,18 +1,16 @@
 <template>
     <div class="product-card">
         <div class="image-container">
-            <!-- Afficher le badge de réduction si discount_percentage > 0 -->
-            <span v-if="product.discount_percentage > 0" class="discount-badge">
-                -{{ product.discount_percentage }}%
+            <!-- Badge calculé depuis flash_price et original_price -->
+            <span v-if="discountPercent > 0" class="discount-badge">
+                -{{ discountPercent }}%
             </span>
-            <!-- CORRECTION ICI : Utiliser images[0].image ou main_image_url -->
             <img 
-                :src="product.main_image_url" 
+                :src="product.image ?? '/images/placeholder-product.jpg'" 
                 :alt="product.name" 
                 class="product-image"
                 @error="handleImageError"
             >
-            <!-- Overlay pour desktop -->
             <div class="overlay">
                 <button class="quick-view-btn" @click="showProductDetail">Détail du produit</button>
             </div>
@@ -21,46 +19,72 @@
         <div class="product-info">
             <div class="product-details">
                 <h4 class="product-name">{{ product.name }}</h4>
-                <p class="product-description">{{ product.short_description }}</p>
+                <!-- Barre de stock si stock_limit défini -->
+                <div v-if="product.stock_limit" class="stock-info">
+                    <div class="stock-bar">
+                        <div class="stock-bar__fill" :style="{ width: stockPercent + '%' }"></div>
+                    </div>
+                    <p class="stock-label">
+                        <span class="stock-sold">{{ product.sold_quantity }} vendus</span>
+                        / {{ product.stock_limit }} dispo
+                    </p>
+                </div>
             </div>
 
             <div class="product-footer flex flex-col gap-2">
                 <div class="price-section flex">
                     <div class="price-group">
-                        <span class="current-price">{{ formatPrice(product.price) }}</span>
-                        <!-- Afficher le prix comparé si disponible -->
-                        <span v-if="product.compare_price" class="original-price">
-                            {{ formatPrice(product.compare_price) }}
-                        </span>
+                        <!-- Prix flash -->
+                        <span class="current-price">{{ formatPrice(product.flash_price) }}</span>
+                        <!-- Prix original barré -->
+                        <span class="original-price">{{ formatPrice(product.original_price) }}</span>
                     </div>
-                   
                     <details-buton @click="addToCart" :is-loading="isLoading"/>
                 </div>
-                <addtocartbutton @click="proceedToCheckout" label="Ajouter au panier"/>
+                <addtocartbutton 
+                    @click="proceedToCheckout" 
+                    :label="product.in_stock ? 'Ajouter au panier' : 'Rupture de stock'"
+                    :disabled="!product.in_stock"
+                />
             </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import detailsButon from '../button/detailsButon.vue';
 import addtocartbutton from '../button/addtocartbutton.vue';
-import type { Product } from '../../stores/categoryStore';
+import type { FlashSaleSimpleProduct } from '@/stores/promotionStore';
 import { useRouter } from 'vue-router';
 
 const props = defineProps<{
-    product: Product;
+    product: FlashSaleSimpleProduct;
     isLoading?: boolean;
 }>();
 
 const emit = defineEmits<{
-    'add-to-cart': [product: Product];
-    'show-product-detail': [product: Product];
+    'add-to-cart': [product: FlashSaleSimpleProduct];
+    'show-product-detail': [product: FlashSaleSimpleProduct];
 }>();
 
 const router = useRouter();
 
-// Méthodes
+// Pourcentage de réduction calculé dynamiquement
+const discountPercent = computed(() => {
+    const original = parseFloat(props.product.original_price);
+    const flash = parseFloat(props.product.flash_price);
+    if (!original || original === 0) return 0;
+    return Math.round(((original - flash) / original) * 100);
+});
+
+// Pourcentage de stock restant pour la barre de progression
+const stockPercent = computed(() => {
+    if (!props.product.stock_limit) return 0;
+    const remaining = props.product.stock_limit - props.product.sold_quantity;
+    return Math.max(0, Math.round((remaining / props.product.stock_limit) * 100));
+});
+
 const addToCart = () => {
     emit('add-to-cart', props.product);
 };
@@ -69,26 +93,15 @@ const showProductDetail = () => {
     emit('show-product-detail', props.product);
 };
 
-const getStars = (rating: number) => {
-    const fullStars = '★'.repeat(Math.floor(rating));
-    const emptyStars = '☆'.repeat(5 - Math.floor(rating));
-    return fullStars + emptyStars;
-};
-
-// Formater le prix
 const formatPrice = (price: string | number): string => {
-    if (!price) return '0,00 €';
-    
+    if (!price) return '0,00 FCFA';
     const numPrice = typeof price === 'string' ? parseFloat(price) : price;
-    
-    // Format français : 15 000,00 €
     return numPrice.toLocaleString('fr-FR', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     }) + ' FCFA';
 };
 
-// Gérer les erreurs d'image
 const handleImageError = (event: Event) => {
     const img = event.target as HTMLImageElement;
     img.src = '/images/placeholder-product.jpg';
@@ -98,31 +111,13 @@ const proceedToCheckout = () => {
     addToCart();
     router.push('/cart-checkout');
 };
-
-// Valeurs par défaut pour les props
-const defaultProduct: Product = {
-    id: 1,
-    name: "Basket simple blanche",
-    price: 89.99,
-    images: [],
-    short_description: "Description courte",
-    description: "Description complète",
-    discount_percentage: 0,
-    compare_price: null,
-};
-
-// Appliquer les valeurs par défaut si nécessaire
-const productWithDefaults = {
-    ...defaultProduct,
-    ...props.product
-};
 </script>
 
 <style scoped>
 /* VOTRE STYLE EXISTANT - inchangé */
 .product-card {
     background: white;
-    border-radius: 0.5rem;
+    border-radius: 1rem;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     border: 1px solid #f0f0f0;
     transition: all 0.3s ease;
@@ -134,7 +129,7 @@ const productWithDefaults = {
     width: 100%;
     min-width: 300px;
     animation: fadeIn 0.5s ease;
-    padding: 0.5rem;
+    padding: 0.75rem;
 }
 
 .product-card:hover {
@@ -283,6 +278,37 @@ const productWithDefaults = {
 .cart-icon {
     width: 1rem;
     height: 1rem;
+}
+
+/* Barre de stock flash sale */
+.stock-info {
+    margin-top: 0.5rem;
+}
+
+.stock-bar {
+    height: 5px;
+    background-color: #e5e7eb;
+    border-radius: 9999px;
+    overflow: hidden;
+    margin-bottom: 0.25rem;
+}
+
+.stock-bar__fill {
+    height: 100%;
+    background-color: #ef4444;
+    border-radius: 9999px;
+    transition: width 0.4s ease;
+}
+
+.stock-label {
+    font-size: 0.7rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.stock-sold {
+    color: #ef4444;
+    font-weight: 600;
 }
 
 /* Responsive Design */
