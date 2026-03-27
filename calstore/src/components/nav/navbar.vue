@@ -607,5 +607,28 @@ export default {
   .nav__links a.router-link-exact-active {
     color: white;
   }
+  /* Force tout ce qui est en mobile à avoir un fond sombre et texte blanc */
+  @media (max-width: 768px) {
+    .nav__links.mobile-active,
+    .dropdown-menu,
+    [class*="mobile"],
+    [class*="hamburger"] {
+      background-color: #1a1a1a !important;
+    }
+    
+    .nav__links.mobile-active *,
+    .dropdown-menu *,
+    [class*="mobile"] * {
+      color: white !important;
+    }
+    
+    .nav__links.mobile-active a.router-link-active {
+      border-left-color: white !important;
+    }
+    
+    .subcategories {
+      border-left-color: #444 !important;
+    }
+  }
 }
 </style>

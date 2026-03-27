@@ -104,4 +104,10 @@ const toggle = () => {
     display: none;
   }
 }
+@media (prefers-color-scheme: dark) {
+  .hamburger,
+  .hamburger * {
+    --line-color: #fff;
+  }
+}
 </style>
