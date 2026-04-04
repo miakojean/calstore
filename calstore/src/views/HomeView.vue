@@ -2,27 +2,28 @@
   <main>
     <navbar @opencart="showCartModal = true"/>
     <TheWelcome />
-    <categorysection />
     <categorysection 
-      title="Sac à mains"
-      slug="sac_a_mains" 
-      :products="handBag"
-      description="Découvrer nos nouveautés de sacs à mains"
+      v-for="category in categoryStore.categories"
+      :key="category.id"
+      :slug="category.slug"
+      :title="category.name"
+      :description="category.description"
     />
-    <categorysection title="Perruques" slug="Perruques"/>
-    <categorysection title="T-shirt" slug="t_shirt"/>
     <footerSection/>
     <cartmodal :isOpen="showCartModal" @close="showCartModal = false"/>
+    <cookiesToast/>
   </main>
 </template>
 
-<script>
-import { ref } from 'vue';
+<script lang="ts">
+import { onMounted, ref } from 'vue';
 import TheWelcome from '../components/TheWelcome.vue'
 import navbar from '@/components/nav/navbar.vue';
 import categorysection from '@/components/section/categorysection.vue';
 import cartmodal from '@/components/modal/cartmodal.vue';
 import footerSection from '@/components/section/footerSection.vue';
+import cookiesToast from '@/components/tools/cookiesToast.vue';
+import { useCategoryStore } from '@/stores/categoryStore';
 
 export default {
   name: 'HomePage',
@@ -31,6 +32,7 @@ export default {
     navbar,
     categorysection,
     cartmodal,
+    cookiesToast,
     footerSection
   },
   setup() {
@@ -68,9 +70,16 @@ export default {
       }
     ])
 
+    const categoryStore = useCategoryStore()
+    
+    onMounted(()=>{
+      categoryStore.fetchAllCategories()
+    })
+
     return {
       showCartModal,
-      handBag
+      handBag,
+      categoryStore
     }
   }
 }
