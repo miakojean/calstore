@@ -16,28 +16,43 @@
   </transition>
 </template>
 
-<script setup>
+<script lang="ts">
 import { ref, onMounted } from "vue"
 import mainbutton from "../button/mainbutton.vue"
 import seconbutton from "../button/seconbutton.vue"
 
-const showBanner = ref(true)
+export default{
+  name:'CookieToast',
+  components:{
+    mainbutton,
+    seconbutton
+  },
+  setup(){
+    const showBanner = ref(true)
 
-onMounted(() => {
-  const consent = localStorage.getItem("cookie-consent")
-  if (!consent) {
-    showBanner.value = true
+    onMounted(() => {
+      const consent = localStorage.getItem("cookie-consent")
+      if (!consent) {
+        showBanner.value = true
+      }
+    })
+
+    function acceptCookies() {
+      localStorage.setItem("cookie-consent", "accepted")
+      showBanner.value = false
+    }
+
+    function rejectCookies() {
+      localStorage.setItem("cookie-consent", "rejected")
+      showBanner.value = false
+    }
+
+    return{
+      showBanner,
+      acceptCookies,
+      rejectCookies
+    }
   }
-})
-
-function acceptCookies() {
-  localStorage.setItem("cookie-consent", "accepted")
-  showBanner.value = false
-}
-
-function rejectCookies() {
-  localStorage.setItem("cookie-consent", "rejected")
-  showBanner.value = false
 }
 </script>
 

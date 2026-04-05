@@ -83,7 +83,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useCartStore } from '@/stores/cartStore';
 import cartSkeleton from './cartSkeleton.vue';
 

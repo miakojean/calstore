@@ -23,7 +23,7 @@
 <script lang="ts">
 import mainbutton from './button/mainbutton.vue';
 import seconbutton from './button/seconbutton.vue';
-import { usePromotionStore } from '@/stores/promotionStore';
+import { usePromotionStore } from '../stores/promotionStore';
 import { onMounted } from 'vue'; 
 import { useRouter } from 'vue-router';
 

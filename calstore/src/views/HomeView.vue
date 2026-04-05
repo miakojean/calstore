@@ -23,7 +23,7 @@ import categorysection from '../components/section/categorysection.vue';
 import cartmodal from '../components/modal/cartmodal.vue';
 import footerSection from '../components/section/footerSection.vue';
 import cookiesToast from '../components/tools/cookiesToast.vue';
-import { useCategoryStore } from '@/stores/categoryStore';
+import { useCategoryStore } from '../stores/categoryStore';
 
 export default {
   name: 'HomePage',

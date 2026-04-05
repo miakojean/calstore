@@ -1,8 +1,8 @@
 <template>
-  <main>
+  <div class="main--container">
     <navbar />
     <checkoutSection />
-  </main>
+  </div>
 </template>
 
 <script>
