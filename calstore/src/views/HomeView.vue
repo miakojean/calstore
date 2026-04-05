@@ -1,9 +1,9 @@
 <template>
-  <main>
+  <div class="main--container">
     <navbar @opencart="showCartModal = true"/>
     <TheWelcome />
     <categorysection 
-      v-for="category in categoryStore.categories"
+      v-for="category in categoryStore.categories" 
       :key="category.id"
       :slug="category.slug"
       :title="category.name"
@@ -12,17 +12,17 @@
     <footerSection/>
     <cartmodal :isOpen="showCartModal" @close="showCartModal = false"/>
     <cookiesToast/>
-  </main>
+  </div>
 </template>
 
 <script lang="ts">
 import { onMounted, ref } from 'vue';
 import TheWelcome from '../components/TheWelcome.vue'
-import navbar from '@/components/nav/navbar.vue';
-import categorysection from '@/components/section/categorysection.vue';
-import cartmodal from '@/components/modal/cartmodal.vue';
-import footerSection from '@/components/section/footerSection.vue';
-import cookiesToast from '@/components/tools/cookiesToast.vue';
+import navbar from '../components/nav/navbar.vue';
+import categorysection from '../components/section/categorysection.vue';
+import cartmodal from '../components/modal/cartmodal.vue';
+import footerSection from '../components/section/footerSection.vue';
+import cookiesToast from '../components/tools/cookiesToast.vue';
 import { useCategoryStore } from '@/stores/categoryStore';
 
 export default {

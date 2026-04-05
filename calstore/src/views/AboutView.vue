@@ -1,15 +1,24 @@
 <template>
-  <div class="about">
-    <h1>This is an about page</h1>
+  <div class="main--container">
+    <navbar @opencart="showCartModal = true"/>
+    <TheWelcome />
+    <footerSection/>
+    <cartmodal :isOpen="showCartModal" @close="showCartModal = false"/>
+    <cookiesToast/>
   </div>
 </template>
 
-<style>
-@media (min-width: 1024px) {
-  .about {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-  }
-}
+<script lang="ts" setup>
+import { ref } from 'vue';
+import TheWelcome from '../components/TheWelcome.vue';
+import navbar from '../components/nav/navbar.vue';
+import cartmodal from '../components/modal/cartmodal.vue';
+import footerSection from '../components/section/footerSection.vue';
+import cookiesToast from '../components/tools/cookiesToast.vue';
+
+const showCartModal = ref(false)
+</script>
+
+<style scoped>
+
 </style>

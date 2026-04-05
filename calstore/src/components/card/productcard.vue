@@ -99,23 +99,6 @@ const proceedToCheckout = () => {
     router.push('/cart-checkout');
 };
 
-// Valeurs par défaut pour les props
-const defaultProduct: Product = {
-    id: 1,
-    name: "Basket simple blanche",
-    price: 89.99,
-    images: [],
-    short_description: "Description courte",
-    description: "Description complète",
-    discount_percentage: 0,
-    compare_price: null,
-};
-
-// Appliquer les valeurs par défaut si nécessaire
-const productWithDefaults = {
-    ...defaultProduct,
-    ...props.product
-};
 </script>
 
 <style scoped>
