@@ -8,7 +8,9 @@
         </p>
         <div class="btn__section">
           <mainbutton/>
-          <seconbutton @click="() => router.push('/promotions')"/>
+          <seconbutton 
+            @click="() => router.push('/promotions')"
+          />
         </div>
       </div>
       <div class="image-content">
