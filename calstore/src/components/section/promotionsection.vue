@@ -43,8 +43,8 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import promoproductcard from '../card/promoProductCard.vue'
 import morebutton from '../button/morebutton.vue';
 import { useCartStore } from '../../stores/cartStore'
-import { usePromotionStore } from '@/stores/promotionStore';
-import type { FlashSaleSimpleProduct } from '@/stores/promotionStore';
+import { usePromotionStore } from '../../stores/promotionStore';
+import type { FlashSaleSimpleProduct } from '../../stores/promotionStore';
 import ProductCardSkeleton from '../card/ProductCardSkeleton.vue';
 
 export default {
@@ -67,7 +67,6 @@ export default {
     const cartStore = useCartStore()
     let resizeObserver: ResizeObserver | null = null
 
-    // ✅ 1 skeleton sur mobile, 3 sur desktop (≥1024px)
     const skeletonCount = ref(window.innerWidth >= 1024 ? 3 : 1)
     const updateSkeletonCount = () => {
       skeletonCount.value = window.innerWidth >= 1024 ? 3 : 1

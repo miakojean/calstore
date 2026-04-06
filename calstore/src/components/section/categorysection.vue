@@ -210,8 +210,9 @@ export default {
 
 <style scoped>
 .category-section {
-  padding: 1rem 0.5rem;
+  padding: 4rem 1rem 1rem 1rem;
   width: 100%;
+  min-height: 100vh;
 }
 
 .section-header {

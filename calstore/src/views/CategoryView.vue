@@ -1,5 +1,5 @@
 <template>
-  <main>
+  <div class="main--container">
     <navbar @opencart="showCartModal = true" />
     <categorysection 
       :title="currentCategory"
@@ -8,7 +8,7 @@
     />
     <footerSection/>
     <cartmodal :isOpen="showCartModal" @close="showCartModal = false"/>
-  </main>
+  </div>
 </template>
 
 <script>
