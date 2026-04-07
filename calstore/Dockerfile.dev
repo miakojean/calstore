@@ -1,0 +1,17 @@
+# ──────────────────────────────────────────────
+# Dockerfile.dev — Frontend Vue (développement uniquement)
+# Pas de build, pas de Nginx : Vite tourne directement
+# ──────────────────────────────────────────────
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+EXPOSE 5173
+
+# --host expose le serveur Vite hors du container (obligatoire)
+CMD ["npm", "run", "dev", "--", "--host"]

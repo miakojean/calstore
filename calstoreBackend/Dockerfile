@@ -1,26 +1,51 @@
-# Utilisation d'une image Python légère
+# ──────────────────────────────────────────────
+# Image de base : Python slim pour garder l'image légère
+# ──────────────────────────────────────────────
 FROM python:3.11-slim
 
-# Empêche Python de générer des fichiers .pyc et assure l'affichage direct des logs
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+# Empêche la génération de .pyc et force les logs en temps réel
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Installation des dépendances système nécessaires (Postgres, Pillow, etc.)
+# ──────────────────────────────────────────────
+# Dépendances système
+# ──────────────────────────────────────────────
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
     libjpeg-dev \
     zlib1g-dev \
+    # Nécessaire pour attendre que Postgres soit prêt dans entrypoint.sh
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
-# Installation des dépendances Python
+# ──────────────────────────────────────────────
+# Dépendances Python (en premier pour profiter du cache Docker)
+# ──────────────────────────────────────────────
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copie du projet
+# ──────────────────────────────────────────────
+# Code source
+# ──────────────────────────────────────────────
 COPY . .
 
-# Script de lancement (optionnel, utile pour les migrations)
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# ──────────────────────────────────────────────
+# Script d'entrée : migrations + démarrage Gunicorn
+# ──────────────────────────────────────────────
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 8000
+
+ENTRYPOINT ["/entrypoint.sh"]
+
+# Gunicorn en production (remplace runserver)
+# calstoreBackend.wsgi = chemin vers ton fichier wsgi.py
+CMD ["gunicorn", "calstoreBackend.wsgi:application", \
+     "--bind", "0.0.0.0:8000", \
+     "--workers", "3", \
+     "--timeout", "120", \
+     "--access-logfile", "-"]
