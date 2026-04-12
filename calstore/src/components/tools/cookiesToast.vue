@@ -9,54 +9,58 @@
         Voulez-vous les accepter ?
       </p>
       <div class="cookie-actions">
-        <seconbutton label="refuser" @click="rejectCookies"/>
-        <mainbutton label="accepter" @click="acceptCookies"/>
+        <seconbutton label="Refuser" @click="handleReject" />
+        <mainbutton label="Accepter" @click="handleAccept" />
       </div>
     </div>
   </transition>
 </template>
 
 <script lang="ts">
-import { ref, onMounted } from "vue"
-import mainbutton from "../button/mainbutton.vue"
-import seconbutton from "../button/seconbutton.vue"
+import { ref, onMounted, computed } from "vue";
+import mainbutton from "../button/mainbutton.vue";
+import seconbutton from "../button/seconbutton.vue";
+import { useCookieStore } from "@/stores/cookieStore";
 
-export default{
-  name:'CookieToast',
-  components:{
+export default {
+  name: 'CookieToast',
+  components: {
     mainbutton,
     seconbutton
   },
-  setup(){
-    const showBanner = ref(true)
+  setup() {
+    const cookieStore = useCookieStore();
 
+    // La bannière est visible uniquement si l'utilisateur n'a pas encore donné son consentement
+    const showBanner = computed(() => !cookieStore.consentGiven);
+
+    const handleAccept = () => {
+      cookieStore.setCookieConsent(true);
+    };
+
+    const handleReject = () => {
+      cookieStore.setCookieConsent(false);
+    };
+
+    // Pas besoin de onMounted pour lire le consentement : le store le fait déjà à l'initialisation
+    // Mais on peut ajouter une vérification supplémentaire si nécessaire
     onMounted(() => {
-      const consent = localStorage.getItem("cookie-consent")
-      if (!consent) {
-        showBanner.value = true
-      }
-    })
+      // Optionnel : forcer la réactivité si besoin (mais le computed réagit déjà)
+      // console.log('Consentement initial :', cookieStore.consentGiven.value);
+    });
 
-    function acceptCookies() {
-      localStorage.setItem("cookie-consent", "accepted")
-      showBanner.value = false
-    }
-
-    function rejectCookies() {
-      localStorage.setItem("cookie-consent", "rejected")
-      showBanner.value = false
-    }
-
-    return{
+    return {
+      cookieStore,
       showBanner,
-      acceptCookies,
-      rejectCookies
-    }
+      handleAccept,
+      handleReject
+    };
   }
-}
+};
 </script>
 
 <style scoped>
+/* Ton style existant est très bien, je le conserve */
 .cookie-banner {
   position: fixed;
   bottom: 1rem;
@@ -71,40 +75,15 @@ export default{
   z-index: 1000;
   opacity: 0.95;
 }
-
-/* Texte */
 .cookie-text {
   margin-bottom: 0.75rem;
   line-height: 1.4;
 }
-
-/* Boutons */
 .cookie-actions {
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
 }
-.btn {
-  padding: 0.4rem 0.8rem;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  transition: transform 0.2s ease;
-}
-.btn:hover {
-  transform: scale(1.05);
-}
-.btn.accept {
-  background-color: var(--primary-color, #4CAF50);
-  color: white;
-}
-.btn.reject {
-  background-color: #ddd;
-  color: #333;
-}
-
-/* Animation slide depuis le bas */
 .slide-up-enter-active,
 .slide-up-leave-active {
   transition: all 0.4s ease;
